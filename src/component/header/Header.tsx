@@ -1,0 +1,62 @@
+import { Link, useNavigate } from "react-router-dom";
+import { useAppContext } from "../../context/AppContext";
+import "./header.css";
+
+export function Header() {
+  const { cartCount, currentUser, setCurrentUser } = useAppContext();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    navigate("/");
+  };
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    navigate("/shop");
+  };
+
+  return (
+    <header className="site-header">
+      <div className="container site-header__inner">
+        <div className="site-header__left">
+          <Link to="/" className="site-header__logo">
+            KYKLOS
+          </Link>
+          <nav className="site-header__nav">
+            <Link to="/shop">Shop</Link>
+            {currentUser && <Link to="/orders">Orders</Link>}
+          </nav>
+        </div>
+        
+        <form className="site-header__search" onSubmit={handleSearch}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" placeholder="Search products..." />
+        </form>
+
+        <div className="site-header__actions">
+          <Link to="/cart" className="cart-link" aria-label="Cart">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          </Link>
+          {currentUser ? (
+            <button className="button button--dark header-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="button button--dark header-btn">
+              Login
+            </Link>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}

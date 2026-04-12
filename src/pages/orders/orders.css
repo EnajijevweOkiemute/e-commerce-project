@@ -1,0 +1,23 @@
+.order-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.order-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-card__items {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1.1rem 0;
+}
+
+.order-card__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
