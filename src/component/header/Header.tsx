@@ -46,7 +46,7 @@ export function Header() {
             </svg>
             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           </Link>
-          <Link to='/signup' className="button button--dark header-btn">Sign Up</Link>
+          <Link to='/signup' className="text-button">Sign Up</Link>
           {currentUser ? (
             <button className="button button--dark header-btn" onClick={handleLogout}>
               Logout
@@ -56,7 +56,7 @@ export function Header() {
               Login
             </Link>
           )}
-          <Link to='/contactUs' className="button button--dark header-btn">FAQ</Link>
+
         </div>
       </div>
     </header>
