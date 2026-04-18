@@ -1,4 +1,4 @@
-import { Product } from "../types";
+import { Product } from "../../types";
 import "./ProductCard.css";
 
 const currency = new Intl.NumberFormat("en-US", {

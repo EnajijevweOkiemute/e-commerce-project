@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { ProductCard } from "../../component/ProductCard";
+import { ProductCard } from "../../component/product/ProductCard";
 import "./shop.css";
 
 export function Shop() {

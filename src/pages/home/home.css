@@ -138,24 +138,3 @@
     align-items: flex-start;
   }
 }
-
-@media (max-width: 860px) {
-  .hero {
-    min-height: 72vh;
-  }
-  .hero__content {
-    min-height: 72vh;
-  }
-  .metrics-grid,
-  .collection-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .hero__actions {
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
