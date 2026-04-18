@@ -5,6 +5,7 @@
   box-shadow: var(--shadow);
   backdrop-filter: blur(20px);
   border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
 }
 
 .product-card__image-wrap {

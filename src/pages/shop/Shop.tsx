@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { ProductCard } from "../../component/product/ProductCard";
-import "./shop.css";
+
 
 export function Shop() {
   const { products, addToCart } = useAppContext();
@@ -68,7 +68,8 @@ export function Shop() {
 
         <div className="shop-main">
           <div className="section-heading shop-heading">
-            <div>
+            <div className="catalogue">
+              <br />
               <span className="eyebrow">Catalog</span>
               <h2>{filteredProducts.length} premium pieces ready to ship</h2>
               <p className="muted">
@@ -78,9 +79,9 @@ export function Shop() {
               </p>
             </div>
             <label className="select-wrap">
-              <span>Sort</span>
+              <span>Sort &thinsp;</span>
               <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-                <option value="featured">Featured</option>
+                <option value="featured"> Featured</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="rating">Top Rated</option>

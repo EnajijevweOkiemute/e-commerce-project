@@ -20,7 +20,7 @@ export function ProductDetail() {
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.id === id) || null,
-    [products, id]
+    [products, id],
   );
 
   const submitReview = (event: React.FormEvent<HTMLFormElement>) => {
@@ -56,7 +56,10 @@ export function ProductDetail() {
       <section className="section">
         <div className="container empty-state">
           <h2>Product not found</h2>
-          <button className="button button--dark" onClick={() => navigate("/shop")}>
+          <button
+            className="button button--dark"
+            onClick={() => navigate("/shop")}
+          >
             Back to Shop
           </button>
         </div>
@@ -80,7 +83,8 @@ export function ProductDetail() {
             <p className="product-card__rating">
               {ratingStars(selectedProduct.rating)}{" "}
               <span>
-                {selectedProduct.rating.toFixed(1)} · {selectedProduct.reviews.length} reviews
+                {selectedProduct.rating.toFixed(1)} ·{" "}
+                {selectedProduct.reviews.length} reviews
               </span>
             </p>
             <p className="muted">{selectedProduct.description}</p>
@@ -123,7 +127,12 @@ export function ProductDetail() {
               </label>
               <label>
                 Comment
-                <textarea name="comment" rows={4} placeholder="Share your experience" required />
+                <textarea
+                  name="comment"
+                  rows={4}
+                  placeholder="Share your experience"
+                  required
+                />
               </label>
               <button className="button button--dark" type="submit">
                 Submit Review
@@ -142,7 +151,9 @@ export function ProductDetail() {
                   <div className="review-card__head">
                     <div>
                       <strong>{review.userName}</strong>
-                      <p className="product-card__rating">{ratingStars(review.rating)}</p>
+                      <p className="product-card__rating">
+                        {ratingStars(review.rating)}
+                      </p>
                     </div>
                     <span className="muted">
                       {new Date(review.date).toLocaleDateString()}
@@ -153,7 +164,9 @@ export function ProductDetail() {
               ))
             ) : (
               <div className="panel">
-                <p className="muted">No reviews yet. Be the first to review this item.</p>
+                <p className="muted">
+                  No reviews yet. Be the first to review this item.
+                </p>
               </div>
             )}
           </div>

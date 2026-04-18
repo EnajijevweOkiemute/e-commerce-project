@@ -65,6 +65,13 @@ export function Login() {
             </label>
             {authError && <p className="form-error" style={{ color: 'red' }}>{authError}</p>}
             <div className="form-grid__full form-actions">
+                <button className="forget-password">
+                    <Link to='/forgotPassword' className="text-button">
+                       Forget Password
+                    </Link>
+                </button>
+            </div>
+            <div className="form-grid__full form-actions">
               <button className="button button--dark button--wide" type="submit">
                 Login
               </button>
