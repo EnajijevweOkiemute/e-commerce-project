@@ -129,34 +129,23 @@ export const seedStorage = () => {
   if (!localStorage.getItem("products")) {
     localStorage.setItem("products", JSON.stringify(mockProducts));
   }
-
-  if (!localStorage.getItem("users")) {
-    localStorage.setItem(
-      "users",
-      JSON.stringify([
-        {
-          id: "1",
-          email: "admin@oriamo.com",
-          password: "admin123",
-          name: "Admin User",
-          role: "admin",
-        },
-        {
-          id: "2",
-          email: "customer@test.com",
-          password: "customer123",
-          name: "John Doe",
-          role: "customer",
-        },
-      ]),
-    );
-  }
-
   if (!localStorage.getItem("orders")) {
     localStorage.setItem("orders", JSON.stringify([]));
   }
 
   if (!localStorage.getItem("cart")) {
     localStorage.setItem("cart", JSON.stringify([]));
+  }
+
+  if (!localStorage.getItem("passwordResetTokens")) {
+    localStorage.setItem("passwordResetTokens", JSON.stringify([]));
+  }
+
+  if (!localStorage.getItem("passwordResetEmails")) {
+    localStorage.setItem("passwordResetEmails", JSON.stringify([]));
+  }
+
+  if (!localStorage.getItem("notifications")) {
+    localStorage.setItem("notifications", JSON.stringify([]));
   }
 };

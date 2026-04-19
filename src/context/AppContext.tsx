@@ -1,18 +1,25 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Product, CartItem, Order, User } from "../types";
+import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from "react";
+import { Product, CartItem, Order, User, AppNotification } from "../types";
 import { seedStorage } from "../constant";
 
 interface AppContextType {
   products: Product[];
-  setProducts: (products: Product[]) => void;
+  setProducts: Dispatch<SetStateAction<Product[]>>;
+  createProduct: (product: Omit<Product, "id" | "rating" | "reviews">) => void;
+  updateProduct: (productId: string, changes: Partial<Product>) => void;
+  deleteProduct: (productId: string) => void;
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
   updateCartQuantity: (id: string, delta: number) => void;
   removeFromCart: (id: string) => void;
   orders: Order[];
-  setOrders: (orders: Order[]) => void;
+  setOrders: Dispatch<SetStateAction<Order[]>>;
+  markOrderShipped: (orderId: string) => void;
+  notifications: AppNotification[];
+  addNotification: (input: Omit<AppNotification, "id" | "createdAt" | "read">) => void;
+  markNotificationRead: (notificationId: string) => void;
   currentUser: User | null;
-  setCurrentUser: (user: User | null) => void;
+  setCurrentUser: Dispatch<SetStateAction<User | null>>;
   clearCart: () => void;
   cartTotal: number;
   cartCount: number;
@@ -36,6 +43,10 @@ function loadUser(): User | null {
   return JSON.parse(localStorage.getItem("currentUser") || "null");
 }
 
+function loadNotifications(): AppNotification[] {
+  return JSON.parse(localStorage.getItem("notifications") || "[]");
+}
+
 function saveCart(items: CartItem[]) {
   localStorage.setItem("cart", JSON.stringify(items));
 }
@@ -52,10 +63,19 @@ function saveOrders(orders: Order[]) {
   localStorage.setItem("orders", JSON.stringify(orders));
 }
 
+function saveProducts(products: Product[]) {
+  localStorage.setItem("products", JSON.stringify(products));
+}
+
+function saveNotifications(notifications: AppNotification[]) {
+  localStorage.setItem("notifications", JSON.stringify(notifications));
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -63,6 +83,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setProducts(loadProducts());
     setCart(loadCart());
     setOrders(loadOrders());
+    setNotifications(loadNotifications());
     setCurrentUser(loadUser());
   }, []);
 
@@ -77,6 +98,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     saveOrders(orders);
   }, [orders]);
+
+  useEffect(() => {
+    saveProducts(products);
+  }, [products]);
+
+  useEffect(() => {
+    saveNotifications(notifications);
+  }, [notifications]);
+
+  const createProduct = (product: Omit<Product, "id" | "rating" | "reviews">) => {
+    setProducts((currentProducts) => [
+      {
+        ...product,
+        id: String(Date.now()),
+        rating: 0,
+        reviews: [],
+      },
+      ...currentProducts,
+    ]);
+  };
+
+  const updateProduct = (productId: string, changes: Partial<Product>) => {
+    setProducts((currentProducts) =>
+      currentProducts.map((product) =>
+        product.id === productId ? { ...product, ...changes, id: product.id } : product,
+      ),
+    );
+  };
+
+  const deleteProduct = (productId: string) => {
+    setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
+  };
 
   const addToCart = (product: Product, quantity = 1) => {
     setCart((currentCart) => {
@@ -119,6 +172,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => setCart([]);
 
+  const markOrderShipped = (orderId: string) => {
+    setOrders((currentOrders) =>
+      currentOrders.map((order) =>
+        order.id === orderId ? { ...order, status: "Shipped" } : order,
+      ),
+    );
+  };
+
+  const addNotification = (input: Omit<AppNotification, "id" | "createdAt" | "read">) => {
+    setNotifications((currentNotifications) => [
+      {
+        ...input,
+        id: `NTF-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        read: false,
+      },
+      ...currentNotifications,
+    ]);
+  };
+
+  const markNotificationRead = (notificationId: string) => {
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((notification) =>
+        notification.id === notificationId
+          ? { ...notification, read: true }
+          : notification,
+      ),
+    );
+  };
+
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -127,6 +210,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         products,
         setProducts,
+        createProduct,
+        updateProduct,
+        deleteProduct,
         cart,
         addToCart,
         updateCartQuantity,
@@ -134,6 +220,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearCart,
         orders,
         setOrders,
+        markOrderShipped,
+        notifications,
+        addNotification,
+        markNotificationRead,
         currentUser,
         setCurrentUser,
         cartCount,

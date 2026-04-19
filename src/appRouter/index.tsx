@@ -10,6 +10,8 @@ import { SignUp } from "../pages/signup/SignUp";
 import Layout from "../layout/Layout";
 import ForgotPassword from "../pages/forgotPassword/ForgotPassword";
 import AdminDashBoard from "../pages/adminDashBoard/AdminDashBoard";
+import { CustomerDashboard } from "../pages/customerDashboard/CustomerDashboard";
+import { ResetPassword } from "../pages/resetPassword/ResetPassword";
 
 
 export function AppRouter() {
@@ -25,8 +27,10 @@ export function AppRouter() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgotPassword" element={< ForgotPassword/>}/>
-          <Route path="/adminDashBoard" element ={< AdminDashBoard />}/>
+          <Route path="/dashboard" element={<CustomerDashboard />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/admin-dashboard" element={<AdminDashBoard />} />
           <Route path="*" element={<h1>Page Not Found</h1>} />
         </Route>
       </Routes>

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
+import { NotificationBell } from "./NotificationBell";
 import "./header.css";
 
 export function Header() {
@@ -25,7 +26,9 @@ export function Header() {
           </Link>
           <nav className="site-header__nav">
             <Link to="/shop">Shop</Link>
-            {currentUser && <Link to="/orders">Orders</Link>}
+            {currentUser?.role === "customer" ? <Link to="/dashboard">Dashboard</Link> : null}
+            {currentUser?.role === "customer" ? <Link to="/orders">Orders</Link> : null}
+            {currentUser?.role === "admin" ? <Link to="/admin-dashboard">Admin</Link> : null}
           </nav>
         </div>
         
@@ -38,6 +41,7 @@ export function Header() {
         </form>
 
         <div className="site-header__actions">
+          <NotificationBell />
           <Link to="/cart" className="cart-link" aria-label="Cart">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1"></circle>
@@ -46,7 +50,10 @@ export function Header() {
             </svg>
             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           </Link>
-          <Link to='/signup' className="text-button">Sign Up</Link>
+          {currentUser ?  null : (
+              <Link to='/signup' className="text-button">Sign Up</Link>
+          )}
+        
           {currentUser ? (
             <button className="button button--dark header-btn" onClick={handleLogout}>
               Logout

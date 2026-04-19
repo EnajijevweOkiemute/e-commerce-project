@@ -16,6 +16,9 @@ export function Shop() {
     [products]
   );
 
+
+  console.log("products", products)
+
   const filteredProducts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const next = products

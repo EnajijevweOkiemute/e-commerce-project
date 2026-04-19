@@ -1,0 +1,21 @@
+.role-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.role-switch__option {
+  min-height: 46px;
+  border-radius: 999px;
+  font-weight: 700;
+  color: var(--muted);
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.role-switch__option--active {
+  background: var(--surface-dark);
+  color: #fff;
+}

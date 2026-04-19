@@ -70,6 +70,63 @@
   gap: 1.5rem;
 }
 
+.notification-menu {
+  position: relative;
+}
+
+.notification-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem;
+  color: var(--text);
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 0.8rem);
+  right: 0;
+  width: min(360px, 82vw);
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.notification-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notification-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.notification-item {
+  display: grid;
+  gap: 0.25rem;
+  text-align: left;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(249, 244, 238, 0.8);
+}
+
+.notification-item--unread {
+  border-color: rgba(180, 131, 87, 0.55);
+  background: rgba(234, 217, 199, 0.65);
+}
+
+.notification-item span,
+.notification-item small {
+  color: var(--muted);
+}
+
 .cart-link {
   position: relative;
   display: inline-flex;

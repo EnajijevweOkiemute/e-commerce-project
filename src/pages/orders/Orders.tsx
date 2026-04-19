@@ -56,6 +56,12 @@ export function Orders() {
                   <span>Total</span>
                   <strong>{currency.format(order.total)}</strong>
                 </div>
+                {order.paymentReference ? (
+                  <div className="summary-row">
+                    <span>Payment Ref</span>
+                    <strong>{order.paymentReference}</strong>
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
