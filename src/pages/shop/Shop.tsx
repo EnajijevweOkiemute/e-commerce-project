@@ -17,7 +17,7 @@ export function Shop() {
   }, [searchQuery]);
 
   const categories = useMemo(
-    () => ["All", ...new Set(products.map((product) => product.category))],
+    () => ["All", ...new Set(products?.map((product) => product.category))],
     [products],
   );
 
