@@ -105,7 +105,7 @@ export function Shop() {
             <div className="catalogue">
               <span className="eyebrow">Catalog</span>
               <h2>{filteredProducts.length} premium pieces ready to ship</h2>
-              <p className="muted" style={{ marginTop: "1rem" }}>
+              <p className="muted">
                 {activeSearchQuery
                   ? `Showing results for "${activeSearchQuery}"`
                   : "Browse the full Kyklos collection."}
@@ -113,7 +113,21 @@ export function Shop() {
             </div>
 
             <div className="shop-heading__actions">
-              <form className="shop-search" onSubmit={handleSearch}>           
+              <form className="shop-search" onSubmit={handleSearch}>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
                 <input
                   type="text"
                   placeholder="Search products..."
@@ -122,9 +136,9 @@ export function Shop() {
                 />
               </form>
 
-              <label className="select-wrap" >
+              <label className="select-wrap">
                 <span className="select-wrap__label">Sort by</span>
-                <select  value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
                   <option value="featured">Featured</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>

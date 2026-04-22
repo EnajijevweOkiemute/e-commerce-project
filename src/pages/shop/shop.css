@@ -69,7 +69,6 @@
 }
 
 .shop-search {
-  display: block; 
   position: relative;
   width: 100%;
   min-width: 320px;
@@ -79,9 +78,16 @@
   color: var(--muted);
   box-sizing: border-box;
   overflow: hidden;
-  /* remove margin-bottom: 20rem */
 }
 
+.shop-search svg {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
 
 .shop-search input {
   display: block;
@@ -147,13 +153,8 @@
   }
 
   .shop-heading__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-  justify-items: end;
-  align-items: stretch;
-  min-width: 320px;
-  background-color: red;
+    width: 100%;
+    justify-items: stretch;
   }
 
   .shop-search,
