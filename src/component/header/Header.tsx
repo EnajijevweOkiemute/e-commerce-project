@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { NotificationBell } from "./NotificationBell";
 import "./header.css";
@@ -6,6 +7,20 @@ import "./header.css";
 export function Header() {
   const { cartCount, currentUser, setCurrentUser } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const userInitials = currentUser?.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+  useEffect(() => {
+    if (location.pathname !== "/shop") return;
+    const query = new URLSearchParams(location.search).get("search") ?? "";
+    setSearchTerm(query);
+  }, [location.pathname, location.search]);
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -14,7 +29,8 @@ export function Header() {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    navigate("/shop");
+    const query = searchTerm.trim();
+    navigate(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
   };
 
   return (
@@ -32,13 +48,7 @@ export function Header() {
           </nav>
         </div>
         
-        <form className="site-header__search" onSubmit={handleSearch}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" placeholder="Search products..." />
-        </form>
+       
 
         <div className="site-header__actions">
           <NotificationBell />
@@ -50,6 +60,22 @@ export function Header() {
             </svg>
             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           </Link>
+          {currentUser ? (
+            <Link
+              to={currentUser.role === "admin" ? "/admin-dashboard" : "/dashboard"}
+              className="header-avatar"
+              aria-label={`${currentUser.name} profile`}
+              title={currentUser.name}
+            >
+              <span className="header-avatar__image" aria-hidden="true">
+                {userInitials || currentUser.name[0]?.toUpperCase()}
+              </span>
+              <span className="header-avatar__meta">
+                <strong>{currentUser.name}</strong>
+                <small>{currentUser.role}</small>
+              </span>
+            </Link>
+          ) : null}
           {currentUser ?  null : (
               <Link to='/signup' className="text-button">Sign Up</Link>
           )}

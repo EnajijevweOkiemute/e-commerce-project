@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { PasswordRulesBox } from "../../component/auth/PasswordRulesBox";
-import { RoleSwitch } from "../../component/auth/RoleSwitch";
 import { createUser, sanitizeUser } from "../../utils/auth";
 import { User } from "../../types";
 import "./signup.css";
 
 export function SignUp() {
   const [authForm, setAuthForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     role: "customer" as User["role"],
@@ -21,7 +21,15 @@ export function SignUp() {
 
   const handleAuthSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = createUser(authForm);
+    const firstName = authForm.firstName.trim();
+    const lastName = authForm.lastName.trim();
+    const result = createUser({
+      name: `${firstName} ${lastName}`.trim(),
+      email: authForm.email,
+      password: authForm.password,
+      role: authForm.role,
+    });
+
     if (result.error || !result.user) {
       setAuthError(result.error || "Unable to create account.");
       return;
@@ -43,19 +51,22 @@ export function SignUp() {
             </div>
           </div>
           <form className="form-grid" onSubmit={handleAuthSubmit}>
-            <label className="form-grid__full">
-              Account type
-              <RoleSwitch
-                value={authForm.role}
-                onChange={(role) => setAuthForm({ ...authForm, role })}
+            <label>
+              First name
+              <input
+                value={authForm.firstName}
+                onChange={(event) =>
+                  setAuthForm({ ...authForm, firstName: event.target.value })
+                }
+                required
               />
             </label>
-            <label className="form-grid__full">
-              Full name
+            <label>
+              Last name
               <input
-                value={authForm.name}
+                value={authForm.lastName}
                 onChange={(event) =>
-                  setAuthForm({ ...authForm, name: event.target.value })
+                  setAuthForm({ ...authForm, lastName: event.target.value })
                 }
                 required
               />

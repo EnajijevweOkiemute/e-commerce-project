@@ -19,9 +19,9 @@ export function CustomerDashboard() {
     return <Navigate to="/admin-dashboard" replace />;
   }
 
-  const myOrders = orders.filter((order) => order.userId === currentUser.id);
+  const myOrders = orders.filter((order) => order?.userId === currentUser?.id);
   const recentOrder = myOrders[0];
-  const totalSpent = myOrders.reduce((sum, order) => sum + order.total, 0);
+  const totalSpent = myOrders?.reduce((sum, order) => sum + order?.total, 0);
 
   return (
     <section className="section">
@@ -29,7 +29,7 @@ export function CustomerDashboard() {
         <div className="section-heading">
           <div>
             <span className="eyebrow">Customer dashboard</span>
-            <h2>{currentUser.name}</h2>
+            <h2 className="">{currentUser.name}</h2>
             <p className="muted">Track orders, review activity, and jump back into your shopping flow.</p>
           </div>
           <Link className="button button--dark" to="/shop">

@@ -16,6 +16,31 @@
   justify-content: space-between;
 }
 
+.catalogue {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.catalogue h2 {
+  margin: 0.15rem 0 0;
+  line-height: 1.02;
+}
+
+.catalogue .muted {
+  margin: 0.2rem 0 0;
+  line-height: 1.6;
+  max-width: 34rem;
+}
+
+.shop-heading__actions {
+  display: grid;
+  gap: 1.1rem;
+  justify-items: end;
+  align-content: start;
+  min-width: 320px;
+}
+
 .chip-list {
   display: flex;
   flex-wrap: wrap;
@@ -36,9 +61,52 @@
 
 .select-wrap {
   display: grid;
-  gap: 0.45rem;
-  min-width: 230px;
+  gap: 0.7rem;
+  width: 100%;
+  min-width: 320px;
   color: var(--muted);
+  justify-items: stretch;
+}
+
+.shop-search {
+  display: block; 
+  position: relative;
+  width: 100%;
+  min-width: 320px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  box-sizing: border-box;
+  overflow: hidden;
+  /* remove margin-bottom: 20rem */
+}
+
+
+.shop-search input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.9rem 1.1rem 0.9rem 2.75rem;
+  border: none;
+  outline: none;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+}
+
+.shop-search input::placeholder {
+  color: var(--muted);
+}
+
+.select-wrap__label {
+  padding-left: 0.2rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 .select-wrap select {
@@ -46,8 +114,20 @@
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.7);
   border-radius: 999px;
-  padding: 0.95rem 1rem;
+  padding: 0.95rem 3rem 0.95rem 1rem;
   outline: none;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.3rem) calc(50% - 0.12rem),
+    calc(100% - 0.95rem) calc(50% - 0.12rem);
+  background-size: 0.45rem 0.45rem, 0.45rem 0.45rem;
+  background-repeat: no-repeat;
 }
 
 .product-grid {
@@ -60,9 +140,26 @@
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .shop-heading {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .shop-heading__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  justify-items: end;
+  align-items: stretch;
+  min-width: 320px;
+  background-color: red;
+  }
+
+  .shop-search,
+  .select-wrap {
+    width: 100%;
+    min-width: 0;
   }
 }
 

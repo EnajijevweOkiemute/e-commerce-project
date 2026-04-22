@@ -57,15 +57,16 @@
 }
 
 .form-actions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 1rem;
+  align-items: stretch;
 }
 
 .auth-switch {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 

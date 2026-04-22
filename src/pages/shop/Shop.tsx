@@ -1,26 +1,57 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { ProductCard } from "../../component/product/ProductCard";
-
-
+import "./shop.css";
 export function Shop() {
   const { products, addToCart } = useAppContext();
   const navigate = useNavigate();
-  const searchQuery = "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") ?? "";
+  const [searchTerm, setSearchTerm] = useState(searchQuery);
   const [category, setCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
 
+  useEffect(() => {
+    setSearchTerm(searchQuery);
+  }, [searchQuery]);
+
   const categories = useMemo(
     () => ["All", ...new Set(products.map((product) => product.category))],
-    [products]
+    [products],
   );
 
+  const updateSearchQuery = (value: string) => {
+    const query = value.trim();
 
-  console.log("products", products)
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+
+      if (query) {
+        nextParams.set("search", query);
+      } else {
+        nextParams.delete("search");
+      }
+
+      return nextParams;
+    });
+  };
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    updateSearchQuery(searchTerm);
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextValue = event.target.value;
+    setSearchTerm(nextValue);
+    updateSearchQuery(nextValue);
+  };
+
+  const activeSearchQuery = searchTerm.trim();
 
   const filteredProducts = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = activeSearchQuery.toLowerCase();
     const next = products
       .filter((product) => category === "All" || product.category === category)
       .filter((product) => {
@@ -47,7 +78,7 @@ export function Shop() {
     }
 
     return next;
-  }, [category, products, searchQuery, sortBy]);
+  }, [activeSearchQuery, category, products, sortBy]);
 
   return (
     <section className="section section--shop">
@@ -72,24 +103,35 @@ export function Shop() {
         <div className="shop-main">
           <div className="section-heading shop-heading">
             <div className="catalogue">
-              <br />
               <span className="eyebrow">Catalog</span>
               <h2>{filteredProducts.length} premium pieces ready to ship</h2>
-              <p className="muted">
-                {searchQuery
-                  ? `Showing results for "${searchQuery}"`
+              <p className="muted" style={{ marginTop: "1rem" }}>
+                {activeSearchQuery
+                  ? `Showing results for "${activeSearchQuery}"`
                   : "Browse the full Kyklos collection."}
               </p>
             </div>
-            <label className="select-wrap">
-              <span>Sort &thinsp;</span>
-              <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-                <option value="featured"> Featured</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Top Rated</option>
-              </select>
-            </label>
+
+            <div className="shop-heading__actions">
+              <form className="shop-search" onSubmit={handleSearch}>           
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+              </form>
+
+              <label className="select-wrap" >
+                <span className="select-wrap__label">Sort by</span>
+                <select  value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                  <option value="featured">Featured</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="rating">Top Rated</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           <div className="product-grid">

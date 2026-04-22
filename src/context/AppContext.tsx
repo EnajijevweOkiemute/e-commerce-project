@@ -72,20 +72,14 @@ function saveNotifications(notifications: AppNotification[]) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  useEffect(() => {
+  const [products, setProducts] = useState<Product[]>(() => {
     seedStorage();
-    setProducts(loadProducts());
-    setCart(loadCart());
-    setOrders(loadOrders());
-    setNotifications(loadNotifications());
-    setCurrentUser(loadUser());
-  }, []);
+    return loadProducts();
+  });
+  const [cart, setCart] = useState<CartItem[]>(loadCart);
+  const [orders, setOrders] = useState<Order[]>(loadOrders);
+  const [notifications, setNotifications] = useState<AppNotification[]>(loadNotifications);
+  const [currentUser, setCurrentUser] = useState<User | null>(loadUser);
 
   useEffect(() => {
     saveCart(cart);

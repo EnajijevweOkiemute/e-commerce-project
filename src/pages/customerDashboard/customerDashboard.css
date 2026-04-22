@@ -3,15 +3,24 @@
   gap: 1.5rem;
 }
 
+.dashboard-stack > .panel,
+.dashboard-metrics > .panel,
+.dashboard-grid > .panel {
+  margin-top: 0;
+  height: 100%;
+}
+
 .dashboard-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
+  align-items: stretch;
 }
 
 .dashboard-stat {
   display: grid;
   gap: 0.4rem;
+  align-content: start;
 }
 
 .dashboard-stat strong {
@@ -22,6 +31,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  align-items: stretch;
 }
 
 .dashboard-card__head {
@@ -36,6 +46,10 @@
   margin: 0.2rem 0 0;
 }
 
+.dashboard-card__head .pill {
+  flex-shrink: 0;
+}
+
 .dashboard-detail-list {
   display: grid;
   gap: 1rem;
@@ -44,6 +58,10 @@
 .dashboard-detail-list div {
   display: grid;
   gap: 0.25rem;
+}
+
+.dashboard-detail-list strong {
+  word-break: break-word;
 }
 
 .dashboard-table {
@@ -72,6 +90,11 @@
   .dashboard-metrics,
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-card__head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .dashboard-table__row {
