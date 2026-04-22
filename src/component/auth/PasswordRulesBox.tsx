@@ -37,7 +37,7 @@ export function PasswordRulesBox({ value }: PasswordRulesBoxProps) {
                     : "ruleLabelNeutral"
               }`}
             >
-              {rule.label}
+              {rule?.label}
             </span>
           </div>
         );
