@@ -233,9 +233,12 @@ export const metrics = [
 
 export const seedStorage = () => {
   const storedProducts = localStorage.getItem("products");
-  if (!storedProducts || storedProducts === "[]") {
+  const parsedProducts = storedProducts ? JSON.parse(storedProducts) : [];
+
+  if (parsedProducts.length !== mockProducts.length) {
     localStorage.setItem("products", JSON.stringify(mockProducts));
   }
+  
   if (!localStorage.getItem("orders")) {
     localStorage.setItem("orders", JSON.stringify([]));
   }

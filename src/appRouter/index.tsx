@@ -18,6 +18,15 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Pages without header/footer */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/dashboard" element={<CustomerDashboard />} />
+        <Route path="/admin-dashboard" element={<AdminDashBoard />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Pages with header/footer */}
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
@@ -25,12 +34,6 @@ export function AppRouter() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/dashboard" element={<CustomerDashboard />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/admin-dashboard" element={<AdminDashBoard />} />
           <Route path="*" element={<h1>Page Not Found</h1>} />
         </Route>
       </Routes>

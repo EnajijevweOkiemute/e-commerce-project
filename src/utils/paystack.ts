@@ -1,3 +1,5 @@
+import { config } from "../config/env";
+
 interface PaystackPopup {
   openIframe: () => void;
 }
@@ -9,7 +11,11 @@ interface PaystackSetupOptions {
   currency?: string;
   ref: string;
   metadata?: Record<string, unknown>;
-  callback: (response: { reference: string; trans: string; transaction: string }) => void;
+  callback: (response: {
+    reference: string;
+    trans: string;
+    transaction: string;
+  }) => void;
   onClose?: () => void;
 }
 
@@ -26,7 +32,7 @@ declare global {
 const PAYSTACK_SCRIPT_ID = "paystack-inline-script";
 
 export function getPaystackPublicKey() {
-  return import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "";
+  return config.paystackPublicKey;
 }
 
 export async function loadPaystackScript() {
@@ -34,42 +40,65 @@ export async function loadPaystackScript() {
     return window.PaystackPop;
   }
 
-  const existingScript = document.getElementById(PAYSTACK_SCRIPT_ID) as HTMLScriptElement | null;
-
+  const existingScript = document.getElementById(
+    PAYSTACK_SCRIPT_ID,
+  ) as HTMLScriptElement | null;
   if (existingScript) {
     await waitForPaystack();
     return window.PaystackPop;
   }
-
-  await new Promise<void>((resolve, reject) => {
+  return new Promise<PaystackGlobal | undefined>((resolve, reject) => {
     const script = document.createElement("script");
     script.id = PAYSTACK_SCRIPT_ID;
     script.src = "https://js.paystack.co/v1/inline.js";
     script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Unable to load Paystack."));
+
+    script.onload = () => {
+      waitForPaystack()
+        .then(() => resolve(window.PaystackPop))
+        .catch(reject);
+    };
+
+    script.onerror = () => {
+      reject(
+        new Error(
+          "Failed to load Paystack script. Please check your internet connection.",
+        ),
+      );
+    };
+
     document.body.appendChild(script);
   });
-
-  await waitForPaystack();
-  return window.PaystackPop;
 }
 
 function waitForPaystack() {
   return new Promise<void>((resolve, reject) => {
+    if (window.PaystackPop) {
+      resolve();
+      return;
+    }
+
     let attempts = 0;
+    const maxAttempts = 50;
+    const interval = 100;
 
     const timer = window.setInterval(() => {
       attempts += 1;
+
       if (window.PaystackPop) {
         window.clearInterval(timer);
         resolve();
+        return;
       }
 
-      if (attempts > 30) {
+      if (attempts >= maxAttempts) {
         window.clearInterval(timer);
-        reject(new Error("Paystack did not initialize."));
+        reject(
+          new Error(
+            "Paystack did not initialize. Please refresh the page and try again.",
+          ),
+        );
       }
-    }, 150);
+    }, interval);
   });
 }

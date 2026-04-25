@@ -53,8 +53,8 @@ export function Shop() {
   const filteredProducts = useMemo(() => {
     const query = activeSearchQuery.toLowerCase();
     const next = products
-      .filter((product) => category === "All" || product.category === category)
-      .filter((product) => {
+      ?.filter((product) => category === "All" || product.category === category)
+      ?.filter((product) => {
         if (!query) return true;
         return (
           product.name.toLowerCase().includes(query) ||
