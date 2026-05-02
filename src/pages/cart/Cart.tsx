@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import "./cart.css";
+import { useState } from "react";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -9,8 +10,21 @@ const currency = new Intl.NumberFormat("en-US", {
 });
 
 export function Cart() {
-  const { cart, updateCartQuantity, removeFromCart, cartCount, cartTotal, currentUser } =
+  const { cart, cartLoading, updateCartQuantity, removeFromCart, cartCount, cartTotal, currentUser } =
     useAppContext();
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+
+  const handleQuantityChange = async (id: string, delta: number) => {
+    setBusyIds((prev) => new Set(prev).add(id));
+    await updateCartQuantity(id, delta);
+    setBusyIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  };
+
+  const handleRemove = async (id: string) => {
+    setBusyIds((prev) => new Set(prev).add(id));
+    await removeFromCart(id);
+    setBusyIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  };
   const navigate = useNavigate();
 
   return (
@@ -29,7 +43,9 @@ export function Cart() {
           </div>
         </div>
 
-        {cart.length > 0 ? (
+        {cartLoading ? (
+          <div className="cart-empty"><p style={{ color: "#888" }}>Loading your cart…</p></div>
+        ) : cart.length > 0 ? (
           <div className="cart-layout">
             {/* Cart Items */}
             <div className="cart-main">
@@ -48,7 +64,8 @@ export function Cart() {
                         <div className="cart-item-quantity">
                           <button
                             className="quantity-btn"
-                            onClick={() => updateCartQuantity(item.id, -1)}
+                            onClick={() => handleQuantityChange(item.id, -1)}
+                            disabled={busyIds.has(item.id)}
                             aria-label="Decrease quantity"
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -58,7 +75,8 @@ export function Cart() {
                           <span className="quantity-value">{item.quantity}</span>
                           <button
                             className="quantity-btn"
-                            onClick={() => updateCartQuantity(item.id, 1)}
+                            onClick={() => handleQuantityChange(item.id, 1)}
+                            disabled={busyIds.has(item.id)}
                             aria-label="Increase quantity"
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -69,7 +87,8 @@ export function Cart() {
                         </div>
                         <button
                           className="cart-item-remove"
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => handleRemove(item.id)}
+                          disabled={busyIds.has(item.id)}
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
@@ -153,7 +172,7 @@ export function Cart() {
               </div>
             </aside>
           </div>
-        ) : (
+        ) : (  // empty cart
           <div className="cart-empty">
             <div className="cart-empty-icon">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

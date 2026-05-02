@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from "react";
 import { Product, CartItem, Order, User, AppNotification } from "../types";
 import { seedStorage } from "../constant";
+import {
+  apiGetCart,
+  apiAddCartItem,
+  apiUpdateCartItem,
+  apiRemoveCartItem,
+  apiClearCart,
+} from "../utils/cartApi";
 
 interface AppContextType {
   products: Product[];
@@ -9,9 +16,10 @@ interface AppContextType {
   updateProduct: (productId: string, changes: Partial<Product>) => void;
   deleteProduct: (productId: string) => void;
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
-  updateCartQuantity: (id: string, delta: number) => void;
-  removeFromCart: (id: string) => void;
+  cartLoading: boolean;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  updateCartQuantity: (id: string, delta: number) => Promise<void>;
+  removeFromCart: (id: string) => Promise<void>;
   orders: Order[];
   setOrders: Dispatch<SetStateAction<Order[]>>;
   markOrderShipped: (orderId: string) => void;
@@ -20,20 +28,12 @@ interface AppContextType {
   markNotificationRead: (notificationId: string) => void;
   currentUser: User | null;
   setCurrentUser: Dispatch<SetStateAction<User | null>>;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
   cartTotal: number;
   cartCount: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-function loadProducts(): Product[] {
-  return JSON.parse(localStorage.getItem("products") || "[]");
-}
-
-function loadCart(): CartItem[] {
-  return JSON.parse(localStorage.getItem("cart") || "[]");
-}
 
 function loadOrders(): Order[] {
   return JSON.parse(localStorage.getItem("orders") || "[]");
@@ -47,16 +47,12 @@ function loadNotifications(): AppNotification[] {
   return JSON.parse(localStorage.getItem("notifications") || "[]");
 }
 
-function saveCart(items: CartItem[]) {
-  localStorage.setItem("cart", JSON.stringify(items));
-}
-
 function saveUser(user: User | null) {
   if (user) {
     localStorage.setItem("currentUser", JSON.stringify(user));
-    return;
+  } else {
+    localStorage.removeItem("currentUser");
   }
-  localStorage.removeItem("currentUser");
 }
 
 function saveOrders(orders: Order[]) {
@@ -74,132 +70,150 @@ function saveNotifications(notifications: AppNotification[]) {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>(() => {
     seedStorage();
-    return loadProducts();
+    localStorage.removeItem("products");
+    return [];
   });
-  const [cart, setCart] = useState<CartItem[]>(loadCart);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartLoading, setCartLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>(loadOrders);
   const [notifications, setNotifications] = useState<AppNotification[]>(loadNotifications);
   const [currentUser, setCurrentUser] = useState<User | null>(loadUser);
 
   useEffect(() => {
-    saveCart(cart);
-  }, [cart]);
+    if (!currentUser) {
+      setCart([]);
+      return;
+    }
+    setCartLoading(true);
+    apiGetCart()
+      .then(setCart)
+      .catch(() => setCart([]))
+      .finally(() => setCartLoading(false));
+  }, [currentUser?.id]); // only re-run when the actual user ID changes
 
-  useEffect(() => {
-    saveUser(currentUser);
-  }, [currentUser]);
-
-  useEffect(() => {
-    saveOrders(orders);
-  }, [orders]);
-
-  useEffect(() => {
-    saveProducts(products);
-  }, [products]);
-
-  useEffect(() => {
-    saveNotifications(notifications);
-  }, [notifications]);
+  useEffect(() => { saveUser(currentUser); }, [currentUser]);
+  useEffect(() => { saveOrders(orders); }, [orders]);
+  useEffect(() => { saveProducts(products); }, [products]);
+  useEffect(() => { saveNotifications(notifications); }, [notifications]);
 
   const createProduct = (product: Omit<Product, "id" | "rating" | "reviews">) => {
-    setProducts((currentProducts) => [
-      {
-        ...product,
-        id: String(Date.now()),
-        rating: 0,
-        reviews: [],
-      },
-      ...currentProducts,
-    ]);
+    setProducts((prev) => [{ ...product, id: String(Date.now()), rating: 0, reviews: [] }, ...prev]);
   };
 
   const updateProduct = (productId: string, changes: Partial<Product>) => {
-    setProducts((currentProducts) =>
-      currentProducts.map((product) =>
-        product.id === productId ? { ...product, ...changes, id: product.id } : product,
-      ),
+    setProducts((prev) =>
+      prev.map((p) => (p.id === productId ? { ...p, ...changes, id: p.id } : p))
     );
   };
 
   const deleteProduct = (productId: string) => {
-    setProducts((currentProducts) => currentProducts.filter((product) => product.id !== productId));
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
   };
 
-  const addToCart = (product: Product, quantity = 1) => {
-    setCart((currentCart) => {
-      const existing = currentCart.find((item) => item.id === product.id);
+  const addToCart = async (product: Product, quantity = 1): Promise<void> => {
+    if (!currentUser) return;
+
+    const existing = cart.find((item) => item.id === product.id);
+    const newQuantity = existing ? existing.quantity + quantity : quantity;
+
+    try {
       if (existing) {
-        return currentCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item,
-        );
+        await apiUpdateCartItem(product.id, newQuantity);
+      } else {
+        await apiAddCartItem(product.id, quantity);
       }
-
-      return [
-        ...currentCart,
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          quantity,
-        },
-      ];
-    });
+      // Only update local state after API confirms success
+      if (existing) {
+        setCart((prev) =>
+          prev.map((item) => (item.id === product.id ? { ...item, quantity: newQuantity } : item))
+        );
+      } else {
+        setCart((prev) => [
+          ...prev,
+          { id: product.id, name: product.name, price: product.price, image: product.image, quantity },
+        ]);
+      }
+    } catch (err) {
+      console.error("[Cart] addToCart failed:", err);
+    }
   };
 
-  const updateCartQuantity = (id: string, direction: number) => {
-    setCart((currentCart) =>
-      currentCart
-        .map((item) => {
-          if (item.id !== id) return item;
-          return { ...item, quantity: Math.max(0, item.quantity + direction) };
-        })
-        .filter((item) => item.quantity > 0),
-    );
+  const updateCartQuantity = async (id: string, delta: number): Promise<void> => {
+    if (!currentUser) return;
+
+    const item = cart.find((i) => i.id === id);
+    if (!item) return;
+
+    const newQty = Math.max(0, item.quantity + delta);
+
+    // Optimistic update
+    if (newQty === 0) {
+      setCart((prev) => prev.filter((i) => i.id !== id));
+    } else {
+      setCart((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, quantity: newQty } : i))
+      );
+    }
+
+    try {
+      if (newQty === 0) {
+        await apiRemoveCartItem(id);
+      } else {
+        await apiUpdateCartItem(id, newQty);
+      }
+    } catch {
+      // Rollback on failure
+      const serverCart = await apiGetCart().catch(() => cart);
+      setCart(serverCart);
+    }
   };
 
-  const removeFromCart = (id: string) => {
-    setCart((currentCart) => currentCart.filter((item) => item.id !== id));
+  const removeFromCart = async (id: string): Promise<void> => {
+    if (!currentUser) return;
+
+    // Optimistic update
+    setCart((prev) => prev.filter((item) => item.id !== id));
+
+    try {
+      await apiRemoveCartItem(id);
+    } catch {
+      const serverCart = await apiGetCart().catch(() => cart);
+      setCart(serverCart);
+    }
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = async (): Promise<void> => {
+    setCart([]);
+    if (!currentUser) return;
+    try {
+      await apiClearCart();
+    } catch {
+      // Non-fatal after checkout — cart is already cleared locally
+    }
+  };
 
   const markOrderShipped = (orderId: string) => {
-    setOrders((currentOrders) =>
-      currentOrders.map((order) =>
-        order.id === orderId ? { ...order, status: "Shipped" } : order,
-      ),
+    setOrders((prev) =>
+      prev.map((order) => (order.id === orderId ? { ...order, status: "Shipped" } : order))
     );
   };
 
   const addNotification = (input: Omit<AppNotification, "id" | "createdAt" | "read">) => {
-    setNotifications((currentNotifications) => [
-      {
-        ...input,
-        id: `NTF-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        read: false,
-      },
-      ...currentNotifications,
+    setNotifications((prev) => [
+      { ...input, id: `NTF-${Date.now()}`, createdAt: new Date().toISOString(), read: false },
+      ...prev,
     ]);
   };
 
   const markNotificationRead = (notificationId: string) => {
-    setNotifications((currentNotifications) =>
-      currentNotifications.map((notification) =>
-        notification.id === notificationId
-          ? { ...notification, read: true }
-          : notification,
-      ),
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
     );
   };
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-  return (
+return (
     <AppContext.Provider
       value={{
         products,
@@ -208,6 +222,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateProduct,
         deleteProduct,
         cart,
+        cartLoading,
         addToCart,
         updateCartQuantity,
         removeFromCart,

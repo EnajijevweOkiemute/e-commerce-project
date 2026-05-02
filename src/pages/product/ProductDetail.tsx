@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import "./product.css";
@@ -18,10 +18,19 @@ export function ProductDetail() {
   const navigate = useNavigate();
   const { products, setProducts, currentUser, addToCart } = useAppContext();
 
+  const [adding, setAdding] = useState(false);
+
   const selectedProduct = useMemo(
     () => products.find((product) => product.id === id) || null,
     [products, id],
   );
+
+  const handleAdd = async () => {
+    if (!selectedProduct) return;
+    setAdding(true);
+    await addToCart(selectedProduct);
+    setAdding(false);
+  };
 
   const submitReview = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -98,9 +107,10 @@ export function ProductDetail() {
             </div>
             <button
               className="button button--dark button--wide"
-              onClick={() => addToCart(selectedProduct)}
+              onClick={handleAdd}
+              disabled={adding}
             >
-              Add to Cart
+              {adding ? "Adding…" : "Add to Cart"}
             </button>
           </div>
         </div>

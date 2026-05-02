@@ -8,6 +8,8 @@ import {
   apiUpdateProduct,
   apiDeleteProduct,
   apiCreateCategory,
+  apiUpdateCategory,
+  apiDeleteCategory,
   Category,
 } from "../../utils/productApi";
 import "./adminDashBoard.css";
@@ -37,16 +39,14 @@ function AdminDashBoard() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-
-  // Per-product edit image files
   const [editImageFiles, setEditImageFiles] = useState<Record<string, File>>({});
-  // Track which products are being saved
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
-  // Track pending edits before saving
-  const [pendingEdits, setPendingEdits] = useState<Record<string, Partial<{ name: string; description: string; price: number; stock: number; categoryId: string }>>>({});
+  const [pendingEdits, setPendingEdits] = useState<Record<string, Partial<{ name: string; description: string; price: any; stock: any; categoryId: string }>>>({});
 
   const [categoryForm, setCategoryForm] = useState({ name: "", description: "" });
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<{ id: string; name: string; description: string } | null>(null);
+  const [categoryBusyIds, setCategoryBusyIds] = useState<Set<string>>(new Set());
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -139,11 +139,9 @@ function AdminDashBoard() {
         description: edits.description ?? product.description,
         price: edits.price ?? product.price,
         stockQuantity: edits.stock ?? product.stock,
-        categoryId: edits.categoryId ?? "",
+        categoryId: edits.categoryId ?? categories.find((c) => c.name === product.category)?.id ?? "",
         image: editImageFiles[productId] ?? null,
       });
-
-      // Sync local state
       updateProduct(productId, {
         ...(edits.name !== undefined && { name: edits.name }),
         ...(edits.description !== undefined && { description: edits.description }),
@@ -307,11 +305,98 @@ function AdminDashBoard() {
                 {categories.length > 0 && (
                   <div className="admin-category-list">
                     <p className="admin-category-list-label">Existing categories</p>
-                    <div className="admin-category-chips">
-                      {categories.map((c) => (
-                        <span key={c.id} className="admin-category-chip">{c.name}</span>
-                      ))}
-                    </div>
+                    {categories.map((c) => {
+                      const isBusy = categoryBusyIds.has(c.id);
+                      const isEditing = editingCategory?.id === c.id;
+                      return (
+                        <div key={c.id} className="admin-category-row">
+                          {isEditing ? (
+                            <>
+                              <input
+                                className="admin-category-edit-input"
+                                value={editingCategory.name}
+                                onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                disabled={isBusy}
+                              />
+                              <input
+                                className="admin-category-edit-input"
+                                value={editingCategory.description}
+                                onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
+                                placeholder="Description"
+                                disabled={isBusy}
+                              />
+                              <div className="admin-category-row-actions">
+                                <button
+                                  type="button"
+                                  className="admin-category-save-btn"
+                                  disabled={isBusy}
+                                  onClick={async () => {
+                                    setCategoryBusyIds((prev) => new Set(prev).add(c.id));
+                                    try {
+                                      await apiUpdateCategory(c.id, editingCategory.name.trim(), editingCategory.description.trim());
+                                      setCategories((prev) => prev.map((cat) => cat.id === c.id ? { ...cat, name: editingCategory.name.trim() } : cat));
+                                      setEditingCategory(null);
+                                      setToast({ message: "Category updated!", type: "success" });
+                                    } catch (err) {
+                                      setToast({ message: err instanceof Error ? err.message : "Failed to update category.", type: "error" });
+                                    } finally {
+                                      setCategoryBusyIds((prev) => { const next = new Set(prev); next.delete(c.id); return next; });
+                                    }
+                                  }}
+                                >
+                                  {isBusy ? <span className="admin-spinner admin-spinner--sm" /> : "Save"}
+                                </button>
+                                <button type="button" className="admin-category-cancel-btn" onClick={() => setEditingCategory(null)} disabled={isBusy}>Cancel</button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <span className="admin-category-chip">{c.name}</span>
+                              <div className="admin-category-row-actions">
+                                <button
+                                  type="button"
+                                  className="admin-category-edit-btn"
+                                  onClick={() => setEditingCategory({ id: c.id, name: c.name, description: "" })}
+                                  disabled={isBusy}
+                                  aria-label="Edit category"
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="admin-category-delete-btn"
+                                  disabled={isBusy}
+                                  aria-label="Delete category"
+                                  onClick={async () => {
+                                    if (!confirm(`Delete category "${c.name}"?`)) return;
+                                    setCategoryBusyIds((prev) => new Set(prev).add(c.id));
+                                    try {
+                                      await apiDeleteCategory(c.id);
+                                      setCategories((prev) => prev.filter((cat) => cat.id !== c.id));
+                                      setToast({ message: "Category deleted.", type: "success" });
+                                    } catch (err) {
+                                      setToast({ message: err instanceof Error ? err.message : "Failed to delete category.", type: "error" });
+                                    } finally {
+                                      setCategoryBusyIds((prev) => { const next = new Set(prev); next.delete(c.id); return next; });
+                                    }
+                                  }}
+                                >
+                                  {isBusy ? <span className="admin-spinner admin-spinner--sm" /> : (
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="3 6 5 6 21 6"/>
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                  )}
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </form>
@@ -366,7 +451,7 @@ function AdminDashBoard() {
                       min="0"
                       step="0.01"
                       value={productForm.price}
-                      onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                      onChange={(e) => setProductForm({ ...productForm, price: e?.target.value })}
                       placeholder="299"
                       required
                       disabled={submitting}
@@ -540,6 +625,20 @@ function AdminDashBoard() {
                 const edits = pendingEdits[product.id] ?? {};
                 const hasEdits = Object.keys(edits).length > 0 || !!editImageFiles[product.id];
 
+                const effectiveName = (edits.name ?? product.name).trim();
+                const effectiveDesc = (edits.description ?? product.description).trim();
+                const effectivePrice = edits.price ?? product.price;
+                const effectiveStock = edits.stock ?? product.stock;
+                const effectiveCategoryId = edits.categoryId ?? categories.find((c) => c.name === product.category)?.id ?? "";
+
+                const canSave =
+                  hasEdits &&
+                  effectiveName !== "" &&
+                  effectiveDesc !== "" &&
+                  Number(effectivePrice) > 0 &&
+                  Number(effectiveStock) >= 0 &&
+                  effectiveCategoryId !== "";
+
                 return (
                   <div className="admin-inventory-item" key={product.id}>
                     <div className="admin-inventory-image-wrap">
@@ -586,7 +685,7 @@ function AdminDashBoard() {
                             min="0"
                             step="0.01"
                             value={edits.price ?? product.price}
-                            onChange={(e) => setPendingEdit(product.id, { price: Number(e.target.value) })}
+                            onChange={(e) => setPendingEdit(product.id, { price: e.target.value})}
                             disabled={isBusy}
                           />
                         </div>
@@ -597,7 +696,7 @@ function AdminDashBoard() {
                             min="0"
                             step="1"
                             value={edits.stock ?? product.stock}
-                            onChange={(e) => setPendingEdit(product.id, { stock: Number(e.target.value) })}
+                            onChange={(e) => setPendingEdit(product.id, { stock: e.target.value})}
                             disabled={isBusy}
                           />
                         </div>
@@ -607,11 +706,11 @@ function AdminDashBoard() {
                           <label>Category</label>
                           <select
                             className="admin-inventory-select"
-                            value={edits.categoryId ?? ""}
+                            value={edits.categoryId ?? categories.find((c) => c.name === product.category)?.id ?? ""}
                             onChange={(e) => setPendingEdit(product.id, { categoryId: e.target.value })}
                             disabled={isBusy}
                           >
-                            <option value="">— unchanged —</option>
+                            <option value="">Select category</option>
                             {categories.map((c) => (
                               <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
@@ -621,10 +720,10 @@ function AdminDashBoard() {
                     </div>
                     <div className="admin-inventory-actions">
                       <button
-                        className={`admin-inventory-save ${!hasEdits ? "admin-inventory-save--dim" : ""}`}
+                        className={`admin-inventory-save ${!canSave ? "admin-inventory-save--dim" : ""}`}
                         type="button"
                         onClick={() => handleSaveProduct(product.id)}
-                        disabled={isBusy || !hasEdits}
+                        disabled={isBusy || !canSave}
                         aria-label="Save changes"
                       >
                         {isBusy ? <span className="admin-spinner admin-spinner--sm" /> : (
@@ -634,7 +733,7 @@ function AdminDashBoard() {
                             <polyline points="7 3 7 8 15 8"></polyline>
                           </svg>
                         )}
-                        Save
+                        UPDATE
                       </button>
                       <button
                         className="admin-inventory-delete"

@@ -40,6 +40,7 @@ export function Shop() {
   const [products, setLocalProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [loading, setLoading] = useState(true);
+  const [, setFetchError] = useState(false);
 
   useEffect(() => {
     setSearchTerm(searchQuery);
@@ -91,6 +92,7 @@ export function Shop() {
         }
       } catch (err) {
         console.error("Error fetching data:", err);
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -233,14 +235,18 @@ export function Shop() {
           </div>
 
           <div className="product-grid">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product?.id}
-                product={product}
-                onOpen={(productId) => navigate(`/product/${productId}`)}
-                onAdd={(item) => addToCart(item)}
-              />
-            ))}
+            {filteredProducts?.length === 0 ? (
+              <p className="shop-empty">No products available.</p>
+            ) : (
+              filteredProducts.map((product) => (
+                <ProductCard
+                  key={product?.id}
+                  product={product}
+                  onOpen={(productId) => navigate(`/product/${productId}`)}
+                  onAdd={(item) => addToCart(item)}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>

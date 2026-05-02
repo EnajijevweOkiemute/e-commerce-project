@@ -18,6 +18,29 @@ export async function fetchCategories(): Promise<Category[]> {
   return res.json();
 }
 
+export async function apiUpdateCategory(id: string, name: string, description: string): Promise<void> {
+  const res = await fetch(`${config.apiBaseUrl}/Category/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ name, description }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Update category failed (${res.status})`);
+  }
+}
+
+export async function apiDeleteCategory(id: string): Promise<void> {
+  const res = await fetch(`${config.apiBaseUrl}/Category/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Delete category failed (${res.status})`);
+  }
+}
+
 export async function apiCreateCategory(name: string, description: string): Promise<Category> {
   const res = await fetch(`${config.apiBaseUrl}/Category`, {
     method: "POST",

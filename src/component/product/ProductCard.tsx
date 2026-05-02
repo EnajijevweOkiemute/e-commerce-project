@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Product } from "../../types";
 import "./ProductCard.css";
 
@@ -14,10 +15,18 @@ function ratingStars(rating: number) {
 interface ProductCardProps {
   product: Product;
   onOpen: (id: string) => void;
-  onAdd: (product: Product) => void;
+  onAdd: (product: Product) => void | Promise<void>;
 }
 
 export function ProductCard({ product, onOpen, onAdd }: ProductCardProps) {
+  const [adding, setAdding] = useState(false);
+
+  const handleAdd = async () => {
+    setAdding(true);
+    await onAdd(product);
+    setAdding(false);
+  };
+
   return (
     <article className="product-card">
       <button className="product-card__image-wrap" onClick={() => onOpen(product.id)}>
@@ -31,11 +40,10 @@ export function ProductCard({ product, onOpen, onAdd }: ProductCardProps) {
         <button className="product-card__title" onClick={() => onOpen(product.id)}>
           {product.name}
         </button>
-        {/* <p className="product-card__description">{product.description}</p> */}
         <div className="product-card__meta">
           <strong>{currency.format(product.price)}</strong>
-          <button className="button button--dark" onClick={() => onAdd(product)}>
-            Add to Cart
+          <button className="button button--dark" onClick={handleAdd} disabled={adding}>
+            {adding ? <span className="product-card__spinner" /> : "Add to Cart"}
           </button>
         </div>
       </div>

@@ -232,22 +232,11 @@ export const metrics = [
 ];
 
 export const seedStorage = () => {
-  const storedProducts = localStorage.getItem("products");
-  const parsedProducts = storedProducts ? JSON.parse(storedProducts) : [];
-
-  if (parsedProducts.length !== mockProducts.length) {
-    localStorage.setItem("products", JSON.stringify(mockProducts));
-  }
-  
   if (!localStorage.getItem("orders")) {
     localStorage.setItem("orders", JSON.stringify([]));
   }
 
-  if (!localStorage.getItem("cart")) {
-    localStorage.setItem("cart", JSON.stringify([]));
-  }
-
-  if (!localStorage.getItem("passwordResetTokens")) {
+if (!localStorage.getItem("passwordResetTokens")) {
     localStorage.setItem("passwordResetTokens", JSON.stringify([]));
   }
 

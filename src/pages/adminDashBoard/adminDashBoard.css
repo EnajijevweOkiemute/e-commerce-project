@@ -735,6 +735,9 @@
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .admin-category-list-label {
@@ -743,7 +746,14 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #888;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.25rem;
+}
+
+.admin-category-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .admin-category-chips {
@@ -761,6 +771,96 @@
   font-size: 0.8rem;
   font-weight: 500;
   color: #444;
+  flex: 1;
+}
+
+.admin-category-row-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.admin-category-edit-input {
+  flex: 1;
+  padding: 0.4rem 0.7rem;
+  border: 1.5px solid #d1d1d1;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #111;
+  outline: none;
+  min-width: 0;
+}
+
+.admin-category-edit-input:focus {
+  border-color: #111;
+}
+
+.admin-category-edit-btn,
+.admin-category-delete-btn,
+.admin-category-save-btn,
+.admin-category-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.admin-category-edit-btn {
+  background: #f0f0f0;
+  color: #444;
+  border-color: #e0e0e0;
+}
+
+.admin-category-edit-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.admin-category-delete-btn {
+  background: #fff;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.admin-category-delete-btn:hover:not(:disabled) {
+  background: #dc2626;
+  color: #fff;
+}
+
+.admin-category-save-btn {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+  padding: 0.35rem 0.85rem;
+}
+
+.admin-category-save-btn:hover:not(:disabled) {
+  background: #000;
+}
+
+.admin-category-cancel-btn {
+  background: #f0f0f0;
+  color: #444;
+  border-color: #e0e0e0;
+  padding: 0.35rem 0.85rem;
+}
+
+.admin-category-cancel-btn:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.admin-category-edit-btn:disabled,
+.admin-category-delete-btn:disabled,
+.admin-category-save-btn:disabled,
+.admin-category-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ═══════════════════════════════════════════════════════════
