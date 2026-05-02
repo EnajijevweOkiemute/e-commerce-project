@@ -79,7 +79,6 @@ export function Home() {
 
   return (
     <>
-      {/* Hero Section */}
       <section className="hero">
         <div className="hero__overlay" />
         {heroSlides.map((slide, i) => {
@@ -100,6 +99,10 @@ export function Home() {
           <div className="hero__actions">
             <button className="hero__cta" onClick={() => navigate("/shop")}>
               Explore Collection
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: "0.5rem" }}>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
             </button>
           </div>
         </div>

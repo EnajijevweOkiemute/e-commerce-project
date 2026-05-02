@@ -95,8 +95,6 @@ function AdminDashBoard() {
         categoryId: productForm.categoryId,
         image: imageFile,
       });
-
-      // Sync local state
       createProduct({
         name: productForm.name.trim(),
         category: category?.name ?? productForm.categoryId,
@@ -239,7 +237,6 @@ function AdminDashBoard() {
           </div>
         </div>
 
-        {/* Main Grid: Category + Add Product + Orders */}
         <div className="admin-main-grid admin-main-grid--3">
           {/* Create Category */}
           <div className="admin-card">
@@ -444,7 +441,7 @@ function AdminDashBoard() {
 
                 <div className="admin-form-row">
                   <div className="admin-form-field">
-                    <label htmlFor="product-price">Price (₦)</label>
+                    <label htmlFor="product-price">Price ($)</label>
                     <input
                       id="product-price"
                       type="number"

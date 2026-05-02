@@ -66,8 +66,9 @@ export function Orders() {
 
   const myOrders = mergedOrders;
 
+
   const totalSpent = myOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalItems = myOrders.reduce((sum, order) =>
+  const totalItems = myOrders.reduce((sum, order) => 
     sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
   );
 

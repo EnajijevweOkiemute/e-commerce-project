@@ -4,7 +4,6 @@
   width: 100%;
 }
 
-/* ── Left panel — watch image ── */
 .login-split__image {
   flex: 1 1 50%;
   position: relative;
@@ -45,7 +44,7 @@
   margin: 0;
 }
 
-/* ── Right panel — form ── */
+
 .login-split__form {
   flex: 1 1 50%;
   display: flex;
@@ -83,7 +82,7 @@
   color: #111;
 }
 
-/* Eyebrow + heading */
+
 .login-eyebrow {
   display: block;
   font-size: 0.75rem;
@@ -101,7 +100,7 @@
   margin: 0 0 2rem;
 }
 
-/* ── Form ── */
+
 .login-form {
   display: flex;
   flex-direction: column;
@@ -146,7 +145,7 @@
   box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
 }
 
-/* Password wrapper */
+
 .login-input-wrap {
   position: relative;
   display: flex;
@@ -175,13 +174,13 @@
   color: #111;
 }
 
-/* Forgot link */
+
 .login-forgot {
   text-align: right;
   margin-top: -0.25rem;
 }
 
-/* Submit button */
+
 .login-submit-btn {
   width: 100%;
   padding: 0.85rem;
@@ -209,7 +208,7 @@
   cursor: not-allowed;
 }
 
-/* Sign up link */
+
 .login-switch {
   display: flex;
   align-items: center;
@@ -223,7 +222,7 @@
   color: #888;
 }
 
-/* Spinner */
+
 .login-spinner {
   display: inline-block;
   width: 18px;
@@ -238,7 +237,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── Responsive ── */
+
 @media (max-width: 768px) {
   .login-split {
     flex-direction: column;
