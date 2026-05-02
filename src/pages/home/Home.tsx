@@ -28,17 +28,17 @@ function getItemClass(index: number, current: number, total: number): CoverflowC
 
 const heroSlides = [
   {
-    image: "https://images.unsplash.com/photo-1590691820318-8cc33afb725e?w=1800&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=1800&q=85&auto=format&fit=crop",
     title: "Refined Luxury",
     description: "Discover premium timepieces and accessories that define modern elegance.",
   },
   {
-    image: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=1800&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1800&q=85&auto=format&fit=crop",
     title: "Timeless Craft",
     description: "Every piece is a testament to precision engineering and enduring style.",
   },
   {
-    image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1800&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1622434641406-a158123450f9?w=1800&q=85&auto=format&fit=crop",
     title: "Modern Elegance",
     description: "Curated collections for those who appreciate the finer things in life.",
   },
@@ -46,26 +46,19 @@ const heroSlides = [
 
 export function Home() {
   const navigate = useNavigate();
-
-  // ✅ HERO STATE
   const [heroIndex, setHeroIndex] = useState(0);
-
-  // ✅ COVERFLOW STATE
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // ✅ AUTO SLIDE (CLEAN)
   useEffect(() => {
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
-
     return () => clearInterval(interval);
   }, []);
 
   const current = heroSlides[heroIndex];
 
-  // COVERFLOW CONTROLS
   const goToSlide = useCallback(
     (index: number) => {
       if (isTransitioning) return;
@@ -86,43 +79,36 @@ export function Home() {
 
   return (
     <>
+      {/* Hero Section */}
       <section className="hero">
         <div className="hero__overlay" />
-
         {heroSlides.map((slide, i) => {
           const offset = i - heroIndex;
-
           return (
             <img
               key={i}
               className="hero__image"
-              style={{
-                transform: `translateX(${offset * 100}%)`,
-              }}
+              style={{ transform: `translateX(${offset * 100}%)` }}
               src={slide.image}
               alt={slide.title}
             />
           );
         })}
-
         <div className="container hero__content">
           <h1 className="hero__title">{current.title}</h1>
           <p className="hero__desc">{current.description}</p>
-
           <div className="hero__actions">
-            <button className="button button--dark" onClick={() => navigate("/shop")}>
+            <button className="hero__cta" onClick={() => navigate("/shop")}>
               Explore Collection
             </button>
           </div>
         </div>
       </section>
-      <section className="section">
+      <section className="collections-section">
         <div className="container">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Featured Collections</span>
-              <h2>Curated around precision, craft, and presence.</h2>
-            </div>
+          <div className="section-header">
+            <span className="section-eyebrow">Featured Collections</span>
+            <h2 className="section-title">Curated around precision, craft, and presence.</h2>
           </div>
 
           <div className="coverflow-carousel">
@@ -130,11 +116,7 @@ export function Home() {
               {collections.map((collection, index) => (
                 <article
                   key={index}
-                  className={`coverflow-item ${getItemClass(
-                    index,
-                    currentSlide,
-                    collections.length
-                  )}`}
+                  className={`coverflow-item ${getItemClass(index, currentSlide, collections.length)}`}
                   onClick={() => {
                     const cls = getItemClass(index, currentSlide, collections.length);
                     if (cls.includes("prev")) prevSlide();
@@ -142,40 +124,51 @@ export function Home() {
                     else navigate("/shop");
                   }}
                 >
-                  <div className="coverflow-item__image-wrapper">
+                  <div className="coverflow-item__image">
                     <img src={collection.image} alt={collection.title} />
                   </div>
-                  <div className="coverflow-item__content">
+                  <div className="coverflow-item__info">
                     <h3>{collection.title}</h3>
                     <p>{collection.description}</p>
                   </div>
                 </article>
               ))}
 
-              <button className="coverflow-btn coverflow-btn--prev" onClick={prevSlide}>
-                ‹
+              <button
+                className="coverflow-nav coverflow-nav--prev"
+                onClick={prevSlide}
+                aria-label="Previous collection"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
               </button>
-              <button className="coverflow-btn coverflow-btn--next" onClick={nextSlide}>
-                ›
+              <button
+                className="coverflow-nav coverflow-nav--next"
+                onClick={nextSlide}
+                aria-label="Next collection"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </button>
             </div>
 
-            <p className="coverflow-caption">{collections[currentSlide]?.title}</p>
-
-            <div className="carousel-indicators">
+            <div className="carousel-dots">
               {collections.map((_, index) => (
                 <button
                   key={index}
-                  className={`carousel-indicator ${
-                    index === currentSlide ? "active" : ""
-                  }`}
+                  className={`carousel-dot ${index === currentSlide ? "active" : ""}`}
                   onClick={() => goToSlide(index)}
+                  aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
             </div>
           </div>
         </div>
       </section>
+
+      {/* Marquee */}
       <section className="marquee-section">
         <div className="marquee-track">
           <div className="marquee-content">
@@ -183,35 +176,43 @@ export function Home() {
             <span className="marquee-item">✦ 30-Day Money Back Guarantee</span>
             <span className="marquee-item">✦ Exclusive Member Discounts</span>
             <span className="marquee-item">✦ Authenticity Certified</span>
+            <span className="marquee-item">✦ Free Shipping on Orders Over $500</span>
+            <span className="marquee-item">✦ 30-Day Money Back Guarantee</span>
+            <span className="marquee-item">✦ Exclusive Member Discounts</span>
+            <span className="marquee-item">✦ Authenticity Certified</span>
           </div>
         </div>
       </section>
-      <section className="section section--muted">
+
+      {/* Metrics */}
+      <section className="metrics-section">
         <div className="container">
           <div className="metrics-grid">
             {metrics.map((item) => (
               <article className="metric-card" key={item.title}>
-                <strong>{item.value}</strong>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
+                <div className="metric-value">{item.value}</div>
+                <h3 className="metric-title">{item.title}</h3>
+                <p className="metric-desc">{item.description}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
-      <section className="section">
-        <div className="container spotlight">
-          <div>
-            <span className="eyebrow">Private client service</span>
-            <h2>Elevate your style with pieces built to last.</h2>
-            <p>
-              Join a growing list of customers who trust Kyklos for premium quality,
-              concierge-level support.
-            </p>
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-card">
+            <div className="cta-content">
+              <span className="cta-eyebrow">Private Client Service</span>
+              <h2 className="cta-title">Elevate your style with pieces built to last.</h2>
+              <p className="cta-desc">
+                Join a growing list of customers who trust Kyklos for premium quality and
+                concierge-level support.
+              </p>
+            </div>
+            <button className="cta-button" onClick={() => navigate("/shop")}>
+              Shop Now
+            </button>
           </div>
-          <button className="button button--dark" onClick={() => navigate("/shop")}>
-            Shop Now
-          </button>
         </div>
       </section>
     </>

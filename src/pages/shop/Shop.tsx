@@ -3,36 +3,111 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { ProductCard } from "../../component/product/ProductCard";
 import "./shop.css";
+import { config } from "../../config/env";
+import { Product } from "../../types";
+
+interface ApiProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stockQuantity: number;
+  isAvailable: boolean;
+  imageUrl: string;
+  categoryId: string;
+  categoryName: string;
+  createdDate: string;
+  updatedDate: string | null;
+}
+
+interface ApiCategory {
+  id: string;
+  name: string;
+  description: string;
+  createdDate: string;
+  updatedDate: string | null;
+}
+
 export function Shop() {
-  const { products, addToCart } = useAppContext();
+  const { addToCart, setProducts } = useAppContext();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
   const searchQuery = searchParams.get("search") ?? "";
   const [searchTerm, setSearchTerm] = useState(searchQuery);
   const [category, setCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
+  const [products, setLocalProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>(["All"]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setSearchTerm(searchQuery);
   }, [searchQuery]);
 
-  const categories = useMemo(
-    () => ["All", ...new Set(products?.map((product) => product.category))],
-    [products],
-  );
+  useEffect(() => {
+    const fetchData = async () => {
+     
+
+      try {
+        const categoriesRes = await fetch(`${config?.apiBaseUrl}/Category`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+           
+          },
+        });
+
+        console.log("Categories response:", categoriesRes);
+        if (categoriesRes?.ok) {
+          const categoriesData: ApiCategory[] = await categoriesRes.json();
+          const categoryNames = categoriesData.map((cat) => cat.name);
+          setCategories(["All", ...categoryNames]);
+        }
+        const productsRes = await fetch(`${config.apiBaseUrl}/Product`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (productsRes.ok) {
+          const productsData: { items: ApiProduct[] } = await productsRes.json();
+          
+          const productList: Product[] = productsData.items.map((apiProduct) => ({
+            id: apiProduct.id,
+            name: apiProduct.name,
+            description: apiProduct.description,
+            category: apiProduct.categoryName,
+            price: apiProduct.price,
+            image: apiProduct.imageUrl,
+            stock: apiProduct.stockQuantity,
+            rating: 0,
+            reviews: [],
+          }));
+
+          setLocalProducts(productList);
+          setProducts(productList);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [setProducts]);
 
   const updateSearchQuery = (value: string) => {
     const query = value.trim();
-
     setSearchParams((currentParams) => {
       const nextParams = new URLSearchParams(currentParams);
-
       if (query) {
         nextParams.set("search", query);
       } else {
         nextParams.delete("search");
       }
-
       return nextParams;
     });
   };
@@ -49,12 +124,11 @@ export function Shop() {
   };
 
   const activeSearchQuery = searchTerm.trim();
-
   const filteredProducts = useMemo(() => {
     const query = activeSearchQuery.toLowerCase();
     const next = products
-      .filter((product) => category === "All" || product.category === category)
-      .filter((product) => {
+      ?.filter((product) => category === "All" || product.category === category)
+      ?.filter((product) => {
         if (!query) return true;
         return (
           product.name.toLowerCase().includes(query) ||
@@ -80,6 +154,16 @@ export function Shop() {
     return next;
   }, [activeSearchQuery, category, products, sortBy]);
 
+  if (loading) {
+    return (
+      <section className="section section--shop">
+        <div className="container">
+          <p>Loading products...</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="section section--shop">
       <div className="container shop-layout">
@@ -104,7 +188,7 @@ export function Shop() {
           <div className="section-heading shop-heading">
             <div className="catalogue">
               <span className="eyebrow">Catalog</span>
-              <h2>{filteredProducts.length} premium pieces ready to ship</h2>
+              <h2>{filteredProducts?.length} premium pieces ready to ship</h2>
               <p className="muted">
                 {activeSearchQuery
                   ? `Showing results for "${activeSearchQuery}"`
@@ -151,7 +235,7 @@ export function Shop() {
           <div className="product-grid">
             {filteredProducts.map((product) => (
               <ProductCard
-                key={product.id}
+                key={product?.id}
                 product={product}
                 onOpen={(productId) => navigate(`/product/${productId}`)}
                 onAdd={(item) => addToCart(item)}

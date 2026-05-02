@@ -121,7 +121,7 @@ export const mockProducts = [
     name: "Aviator Sunglasses",
     price: 199,
     category: "Accessories",
-    image: "https://images.unsplash.com/photo-1625591341337-13153db213dc?w=1200&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1509695507497-903c140c43b0?w=1200&auto=format&fit=crop",
     description: "Classic aviator silhouette with gradient lenses and a titanium frame.",
     stock: 17, rating: 4.5, reviews: [],
   },
@@ -233,9 +233,12 @@ export const metrics = [
 
 export const seedStorage = () => {
   const storedProducts = localStorage.getItem("products");
-  if (!storedProducts || storedProducts === "[]") {
+  const parsedProducts = storedProducts ? JSON.parse(storedProducts) : [];
+
+  if (parsedProducts.length !== mockProducts.length) {
     localStorage.setItem("products", JSON.stringify(mockProducts));
   }
+  
   if (!localStorage.getItem("orders")) {
     localStorage.setItem("orders", JSON.stringify([]));
   }

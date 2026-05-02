@@ -21,17 +21,17 @@ export function ProductCard({ product, onOpen, onAdd }: ProductCardProps) {
   return (
     <article className="product-card">
       <button className="product-card__image-wrap" onClick={() => onOpen(product.id)}>
-        <img className="product-card__image" src={product.image} alt={product.name} />
+        <img className="product-card__image" src={product?.image} alt={product.name} />
         {product.stock < 10 ? <span className="pill pill--alert">Low Stock</span> : null}
       </button>
       <div className="product-card__body">
         <p className="product-card__rating">
-          {ratingStars(product.rating)} <span>{product.rating.toFixed(1)}</span>
+          {ratingStars(product.rating)} <span>{product?.rating.toFixed(1)}</span>
         </p>
         <button className="product-card__title" onClick={() => onOpen(product.id)}>
           {product.name}
         </button>
-        <p className="product-card__description">{product.description}</p>
+        {/* <p className="product-card__description">{product.description}</p> */}
         <div className="product-card__meta">
           <strong>{currency.format(product.price)}</strong>
           <button className="button button--dark" onClick={() => onAdd(product)}>
