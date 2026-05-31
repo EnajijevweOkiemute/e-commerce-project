@@ -10,6 +10,43 @@ const currency = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+const deliverySteps = [
+  {
+    key: "purchased",
+    title: "Purchased",
+    description: "Your order has been placed successfully.",
+  },
+  {
+    key: "picked",
+    title: "Product picked",
+    description: "Your item has been picked and packed.",
+  },
+  {
+    key: "shipped",
+    title: "Shipped",
+    description: "Your order is on the way to your delivery address."
+  },
+  {
+    key: "delivered",
+    title: "Delivered",
+    description: "Your product has arrived.",
+  },
+];
+
+function normalizeStatus(status: string) {
+  return status.toLowerCase().replace(/\s+/g, "-");
+}
+
+function deliveryStepIndex(status: string) {
+  const normalized = normalizeStatus(status);
+
+  if (["delivered", "complete", "completed"].includes(normalized)) return 3;
+  if (["shipped", "on-the-way", "out-for-delivery", "outfordelivery"].includes(normalized)) return 2;
+  if (["picked"]?.includes(normalized)) return 1;
+
+  return 0;
+}
+
 export function Orders() {
   const { orders, currentUser } = useAppContext();
   const navigate = useNavigate();
@@ -73,7 +110,7 @@ export function Orders() {
   );
 
   const getStatusClass = (status: string) => {
-    return `orders-status-badge status-${status.toLowerCase()}`;
+    return `orders-status-badge status-${normalizeStatus(status)}`;
   };
 
   return (
@@ -174,6 +211,45 @@ export function Orders() {
                       </span>
                     </div>
                   ))}
+                </div>
+
+                <div className="delivery-tracker" aria-label={`Delivery status for order ${order.id}`}>
+                  <div className="delivery-map">
+                    <div
+                      className="delivery-map-progress"
+                      style={{ width: `${(deliveryStepIndex(order.status) / (deliverySteps.length - 1)) * 100}%` }}
+                    />
+                    {deliverySteps.map((step, index) => {
+                      const isActive = index <= deliveryStepIndex(order.status);
+                      return (
+                        <div
+                          className={`delivery-map-stop ${isActive ? "delivery-map-stop--active" : ""}`}
+                          key={step.key}
+                          style={{ left: `${(index / (deliverySteps.length - 1)) * 100}%` }}
+                        >
+                          <span className="delivery-map-pin">
+                            {isActive ? (
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : null}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="delivery-steps">
+                    {deliverySteps.map((step, index) => {
+                      const isActive = index <= deliveryStepIndex(order.status);
+                      return (
+                        <div className={`delivery-step ${isActive ? "delivery-step--active" : ""}`} key={step.key}>
+                          <strong>{step.title}</strong>
+                          <span>{step.description}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="orders-card-footer">

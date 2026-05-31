@@ -5,6 +5,8 @@ import { ProductDetail } from "../pages/product/ProductDetail";
 import { Cart } from "../pages/cart/Cart";
 import { Checkout } from "../pages/checkout/Checkout";
 import { Orders } from "../pages/orders/Orders";
+import { Transactions } from "../pages/transactions/Transactions";
+import { InfoPage } from "../pages/info/InfoPage";
 import { Login } from "../pages/login/Login";
 import { SignUp } from "../pages/signup/SignUp";
 import Layout from "../layout/Layout";
@@ -28,12 +30,18 @@ export function AppRouter() {
 
         {/* Pages with header/footer */}
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/orders" element={<Orders />} />
+          <Route index element={<Home />} />
+          <Route path="shop" element={<Shop />} />
+          <Route path="product/:id" element={<ProductDetail />} />
+          <Route path="cart" element={<Cart />} />
+          <Route path="checkout" element={<Checkout />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="about-us" element={<InfoPage />} />
+          <Route path="terms-of-service" element={<InfoPage />} />
+          <Route path="privacy-policy" element={<InfoPage />} />
+          <Route path="contact-us" element={<InfoPage />} />
+          <Route path="faq" element={<InfoPage />} />
           <Route path="*" element={<h1>Page Not Found</h1>} />
         </Route>
       </Routes>

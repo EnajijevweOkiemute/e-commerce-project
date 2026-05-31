@@ -1,13 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from "react";
-import { Product, CartItem, Order, User, AppNotification } from "../types";
+import { Product, CartItem, Order, User, AppNotification, Transaction } from "../types";
 import { seedStorage } from "../constant";
-import {
-  apiGetCart,
-  apiAddCartItem,
-  apiUpdateCartItem,
-  apiRemoveCartItem,
-  apiClearCart,
-} from "../utils/cartApi";
 
 interface AppContextType {
   products: Product[];
@@ -20,9 +13,12 @@ interface AppContextType {
   addToCart: (product: Product, quantity?: number) => Promise<void>;
   updateCartQuantity: (id: string, delta: number) => Promise<void>;
   removeFromCart: (id: string) => Promise<void>;
+  replaceCart: (items: CartItem[]) => Promise<void>;
   orders: Order[];
   setOrders: Dispatch<SetStateAction<Order[]>>;
-  markOrderShipped: (orderId: string) => void;
+  markOrderDelivered: (orderId: string) => void;
+  transactions: Transaction[];
+  addTransaction: (transaction: Transaction) => void;
   notifications: AppNotification[];
   addNotification: (input: Omit<AppNotification, "id" | "createdAt" | "read">) => void;
   markNotificationRead: (notificationId: string) => void;
@@ -34,9 +30,15 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+const GUEST_CART_KEY = "cart";
+const USER_CART_PREFIX = "cart:";
 
 function loadOrders(): Order[] {
   return JSON.parse(localStorage.getItem("orders") || "[]");
+}
+
+function loadTransactions(): Transaction[] {
+  return JSON.parse(localStorage.getItem("transactions") || "[]");
 }
 
 function loadUser(): User | null {
@@ -59,6 +61,10 @@ function saveOrders(orders: Order[]) {
   localStorage.setItem("orders", JSON.stringify(orders));
 }
 
+function saveTransactions(transactions: Transaction[]) {
+  localStorage.setItem("transactions", JSON.stringify(transactions));
+}
+
 function saveProducts(products: Product[]) {
   localStorage.setItem("products", JSON.stringify(products));
 }
@@ -67,32 +73,93 @@ function saveNotifications(notifications: AppNotification[]) {
   localStorage.setItem("notifications", JSON.stringify(notifications));
 }
 
+function cartStorageKey(userId?: string | null) {
+  return userId ? `${USER_CART_PREFIX}${userId}` : GUEST_CART_KEY;
+}
+
+function normalizeCart(cart: CartItem[]): CartItem[] {
+  return cart
+    .filter((item) => item?.id && Number(item.quantity) > 0)
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price) || 0,
+      image: item.image || "",
+      quantity: Math.max(1, Math.floor(Number(item.quantity) || 1)),
+    }));
+}
+
+function loadCart(userId?: string | null): CartItem[] {
+  try {
+    return normalizeCart(JSON.parse(localStorage.getItem(cartStorageKey(userId)) || "[]"));
+  } catch {
+    return [];
+  }
+}
+
+function saveCart(key: string, cart: CartItem[]) {
+  localStorage.setItem(key, JSON.stringify(normalizeCart(cart)));
+}
+
+function mergeCarts(primary: CartItem[], secondary: CartItem[]): CartItem[] {
+  const merged = new Map<string, CartItem>();
+
+  [...primary, ...secondary].forEach((item) => {
+    const existing = merged.get(item.id);
+    merged.set(item.id, {
+      ...item,
+      quantity: (existing?.quantity || 0) + item.quantity,
+    });
+  });
+
+  return Array.from(merged.values());
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
+  const loadedUser = loadUser();
   const [products, setProducts] = useState<Product[]>(() => {
     seedStorage();
     localStorage.removeItem("products");
     return [];
   });
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => loadCart(loadedUser?.id));
+  const [activeCartKey, setActiveCartKey] = useState(() => cartStorageKey(loadedUser?.id));
   const [cartLoading, setCartLoading] = useState(false);
   const [orders, setOrders] = useState<Order[]>(loadOrders);
+  const [transactions, setTransactions] = useState<Transaction[]>(loadTransactions);
   const [notifications, setNotifications] = useState<AppNotification[]>(loadNotifications);
-  const [currentUser, setCurrentUser] = useState<User | null>(loadUser);
+  const [currentUser, setCurrentUser] = useState<User | null>(loadedUser);
 
   useEffect(() => {
-    if (!currentUser) {
-      setCart([]);
-      return;
-    }
+    const nextKey = cartStorageKey(currentUser?.id);
     setCartLoading(true);
-    apiGetCart()
-      .then(setCart)
-      .catch(() => setCart([]))
-      .finally(() => setCartLoading(false));
+    setActiveCartKey(nextKey);
+
+    if (currentUser) {
+      const userCart = loadCart(currentUser.id);
+      const guestCart = loadCart(null);
+      const mergedCart = mergeCarts(userCart, guestCart);
+
+      if (guestCart.length > 0) {
+        localStorage.removeItem(GUEST_CART_KEY);
+      }
+
+      setCart(mergedCart);
+    } else {
+      setCart(loadCart(null));
+    }
+
+    setCartLoading(false);
   }, [currentUser?.id]); // only re-run when the actual user ID changes
 
   useEffect(() => { saveUser(currentUser); }, [currentUser]);
+  useEffect(() => {
+    if (activeCartKey === cartStorageKey(currentUser?.id)) {
+      saveCart(activeCartKey, cart);
+    }
+  }, [activeCartKey, cart, currentUser?.id]);
   useEffect(() => { saveOrders(orders); }, [orders]);
+  useEffect(() => { saveTransactions(transactions); }, [transactions]);
   useEffect(() => { saveProducts(products); }, [products]);
   useEffect(() => { saveNotifications(notifications); }, [notifications]);
 
@@ -111,91 +178,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addToCart = async (product: Product, quantity = 1): Promise<void> => {
-    if (!currentUser) return;
+    const parsedQuantity = Math.floor(Number(quantity));
+    const safeQuantity = Number.isFinite(parsedQuantity) ? Math.max(1, parsedQuantity) : 1;
 
-    const existing = cart.find((item) => item.id === product.id);
-    const newQuantity = existing ? existing.quantity + quantity : quantity;
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
 
-    try {
       if (existing) {
-        await apiUpdateCartItem(product.id, newQuantity);
-      } else {
-        await apiAddCartItem(product.id, quantity);
-      }
-      // Only update local state after API confirms success
-      if (existing) {
-        setCart((prev) =>
-          prev.map((item) => (item.id === product.id ? { ...item, quantity: newQuantity } : item))
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + safeQuantity }
+            : item,
         );
-      } else {
-        setCart((prev) => [
-          ...prev,
-          { id: product.id, name: product.name, price: product.price, image: product.image, quantity },
-        ]);
       }
-    } catch (err) {
-      console.error("[Cart] addToCart failed:", err);
-    }
+
+      return [
+        ...prev,
+        { id: product.id, name: product.name, price: product.price, image: product.image, quantity: safeQuantity },
+      ];
+    });
   };
 
   const updateCartQuantity = async (id: string, delta: number): Promise<void> => {
-    if (!currentUser) return;
-
-    const item = cart.find((i) => i.id === id);
-    if (!item) return;
-
-    const newQty = Math.max(0, item.quantity + delta);
-
-    // Optimistic update
-    if (newQty === 0) {
-      setCart((prev) => prev.filter((i) => i.id !== id));
-    } else {
-      setCart((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, quantity: newQty } : i))
-      );
-    }
-
-    try {
-      if (newQty === 0) {
-        await apiRemoveCartItem(id);
-      } else {
-        await apiUpdateCartItem(id, newQty);
-      }
-    } catch {
-      // Rollback on failure
-      const serverCart = await apiGetCart().catch(() => cart);
-      setCart(serverCart);
-    }
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item,
+        )
+        .filter((item) => item.quantity > 0),
+    );
   };
 
   const removeFromCart = async (id: string): Promise<void> => {
-    if (!currentUser) return;
-
-    // Optimistic update
     setCart((prev) => prev.filter((item) => item.id !== id));
+  };
 
-    try {
-      await apiRemoveCartItem(id);
-    } catch {
-      const serverCart = await apiGetCart().catch(() => cart);
-      setCart(serverCart);
-    }
+  const replaceCart = async (items: CartItem[]): Promise<void> => {
+    setCart(normalizeCart(items));
   };
 
   const clearCart = async (): Promise<void> => {
     setCart([]);
-    if (!currentUser) return;
-    try {
-      await apiClearCart();
-    } catch {
-      // Non-fatal after checkout — cart is already cleared locally
-    }
   };
 
-  const markOrderShipped = (orderId: string) => {
+  const markOrderDelivered = (orderId: string) => {
     setOrders((prev) =>
-      prev.map((order) => (order.id === orderId ? { ...order, status: "Shipped" } : order))
+      prev.map((order) => (order.id === orderId ? { ...order, status: "Delivered" } : order))
     );
+  };
+
+  const addTransaction = (transaction: Transaction) => {
+    setTransactions((prev) => [
+      transaction,
+      ...prev.filter((item) => item.id !== transaction.id),
+    ]);
   };
 
   const addNotification = (input: Omit<AppNotification, "id" | "createdAt" | "read">) => {
@@ -226,10 +262,13 @@ return (
         addToCart,
         updateCartQuantity,
         removeFromCart,
+        replaceCart,
         clearCart,
         orders,
         setOrders,
-        markOrderShipped,
+        markOrderDelivered,
+        transactions,
+        addTransaction,
         notifications,
         addNotification,
         markNotificationRead,

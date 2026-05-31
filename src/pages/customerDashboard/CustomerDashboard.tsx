@@ -9,7 +9,7 @@ const currency = new Intl.NumberFormat("en-US", {
 });
 
 export function CustomerDashboard() {
-  const { currentUser, orders, cartCount } = useAppContext();
+  const { currentUser, orders, cartCount, transactions } = useAppContext();
 
   if (!currentUser) {
     return <Navigate to="/login" replace />;
@@ -22,6 +22,8 @@ export function CustomerDashboard() {
   const myOrders = orders.filter((order) => order?.userId === currentUser?.id);
   const recentOrder = myOrders[0];
   const totalSpent = myOrders?.reduce((sum, order) => sum + order?.total, 0);
+  const myTransactions = transactions.filter((transaction) => transaction.userId === currentUser.id);
+  const failedTransactions = myTransactions.filter((transaction) => transaction.status === "Failed").length;
 
   return (
     <section className="dashboard-section">
@@ -125,6 +127,30 @@ export function CustomerDashboard() {
               <strong className="metric-value">{cartCount}</strong>
             </div>
           </div>
+
+          <Link className="metric-card metric-card--link" to="/transactions">
+            <div className="metric-icon metric-icon--transactions">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <line x1="2" y1="10" x2="22" y2="10" />
+                <path d="M7 15h.01" />
+                <path d="M11 15h4" />
+              </svg>
+            </div>
+            <div className="metric-content">
+              <span className="metric-label">Transactions</span>
+              <strong className="metric-value">{myTransactions.length}</strong>
+            </div>
+          </Link>
         </div>
         <div className="dashboard-grid">
           {/* Profile */}
@@ -201,6 +227,39 @@ export function CustomerDashboard() {
                   Your first order will appear here after checkout.
                 </p>
               )}
+            </div>
+          </div>
+          <div className="dashboard-card">
+            <div className="dashboard-card-header">
+              <div>
+                <span className="card-eyebrow">Payments</span>
+                <h3 className="card-title">Transaction History</h3>
+              </div>
+              {failedTransactions > 0 && (
+                <span className="status-badge status-badge--failed">
+                  {failedTransactions} failed
+                </span>
+              )}
+            </div>
+            <div className="dashboard-card-body">
+              <p className="card-description">
+                Review successful and failed payment attempts, download receipts, and repeat transactions.
+              </p>
+              <Link className="card-link" to="/transactions">
+                View transactions
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
             </div>
           </div>
         </div>

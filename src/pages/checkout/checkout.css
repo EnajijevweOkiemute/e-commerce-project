@@ -51,6 +51,19 @@
   margin: 0;
 }
 
+.checkout-repeat-banner {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.85rem 1rem;
+  background: #eef6ff;
+  border: 1px solid #bfd9f6;
+  border-radius: 8px;
+  color: #244c78;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .checkout-layout {
   display: grid;
   grid-template-columns: 1fr 420px;

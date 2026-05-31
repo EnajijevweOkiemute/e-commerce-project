@@ -247,4 +247,8 @@ if (!localStorage.getItem("passwordResetTokens")) {
   if (!localStorage.getItem("notifications")) {
     localStorage.setItem("notifications", JSON.stringify([]));
   }
+
+  if (!localStorage.getItem("transactions")) {
+    localStorage.setItem("transactions", JSON.stringify([]));
+  }
 };

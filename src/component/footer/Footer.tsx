@@ -43,18 +43,18 @@ export function Footer() {
 
             <div className="footer-column">
               <h4 className="footer-heading">Support</h4>
-              <a href="#" className="footer-link">Contact Us</a>
-              <a href="#" className="footer-link">Shipping & Returns</a>
-              <a href="#" className="footer-link">FAQ</a>
-              <a href="#" className="footer-link">Size Guide</a>
+              <Link to="/contact-us" className="footer-link">Contact Us</Link>
+              {/* <a href="#" className="footer-link">Shipping & Returns</a> */}
+              <Link to="/faq" className="footer-link">FAQ</Link>
+              {/* <a href="#" className="footer-link">Size Guide</a> */}
             </div>
 
             <div className="footer-column">
               <h4 className="footer-heading">Company</h4>
-              <a href="#" className="footer-link">About Us</a>
-              <a href="#" className="footer-link">Careers</a>
-              <a href="#" className="footer-link">Privacy Policy</a>
-              <a href="#" className="footer-link">Terms of Service</a>
+              <Link to="/about-us" className="footer-link">About Us</Link>
+              {/* <a href="#" className="footer-link">Careers</a> */}
+              <Link to="/privacy-policy" className="footer-link">Privacy Policy</Link>
+              <Link to="/terms-of-service" className="footer-link">Terms of Service</Link>
             </div>
 
             <div className="footer-column">

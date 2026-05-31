@@ -48,6 +48,19 @@ export interface Order {
   customer: CheckoutCustomer;
 }
 
+export interface Transaction {
+  id: string;
+  orderId: string;
+  userId: string;
+  createdAt: string;
+  total: number;
+  status: "Successful" | "Failed";
+  paymentReference: string;
+  failureReason?: string;
+  items: CartItem[];
+  customer: CheckoutCustomer;
+}
+
 export interface User {
   id: string;
   name: string;

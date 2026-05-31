@@ -306,10 +306,12 @@
 @media (max-width: 768px) {
   .site-header__inner {
     min-height: 64px;
+    gap: 0.5rem;
+    padding: 0 0.75rem;
   }
 
   .site-header__logo {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 
   .site-header__nav {
@@ -317,14 +319,27 @@
   }
 
   .site-header__actions {
-    gap: 1rem;
+    gap: 0.5rem;
   }
 
   .header-avatar__meta {
     display: none;
   }
 
+  .header-avatar__image {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+  }
+
   .header-signup-link {
     display: none;
+  }
+
+  .header-logout-btn,
+  .header-login-btn {
+    padding: 0 0.75rem;
+    min-height: 32px;
+    font-size: 0.75rem;
   }
 }

@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { loadPaystackScript, getPaystackPublicKey } from "../../utils/paystack";
 import { apiCheckout } from "../../utils/orderApi";
+import { CheckoutCustomer } from "../../types";
 import "./checkout.css";
 
 const currency = new Intl.NumberFormat("en-US", {
@@ -12,48 +13,82 @@ const currency = new Intl.NumberFormat("en-US", {
 });
 
 export function Checkout() {
-  const { cart, cartTotal, currentUser, orders, setOrders, clearCart, addNotification } = useAppContext();
+  const {
+    cart,
+    cartTotal,
+    currentUser,
+    setOrders,
+    clearCart,
+    addNotification,
+    addTransaction,
+  } = useAppContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const repeatTransaction = (
+    location.state as
+      | { repeatTransaction?: { orderId: string; customer?: CheckoutCustomer } }
+      | null
+  )?.repeatTransaction;
   const [paymentError, setPaymentError] = useState("");
   const [isPaying, setIsPaying] = useState(false);
-  const [isPaystackReady, setIsPaystackReady] = useState(false);
   const [checkoutState, setCheckoutState] = useState({
-    name: currentUser?.name || "",
-    email: currentUser?.email || "",
-    address: "",
-    city: "",
-    country: "",
+    name: repeatTransaction?.customer?.name || currentUser?.name || "",
+    email: repeatTransaction?.customer?.email || currentUser?.email || "",
+    address: repeatTransaction?.customer?.address || "",
+    city: repeatTransaction?.customer?.city || "",
+    country: repeatTransaction?.customer?.country || "",
   });
 
   const subtotal = cartTotal;
   const shipping = cart.length > 0 ? 15 : 0;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
+  const isCheckoutFormComplete = Object.values(checkoutState).every(
+    (value) => value.trim().length > 0,
+  );
 
-  // Preload Paystack script when component mounts
-  useEffect(() => {
-    loadPaystackScript()
-      .then(() => {
-        setIsPaystackReady(true);
-      })
-      .catch((error) => {
-        console.error("Failed to load Paystack:", error);
-        setPaymentError("Failed to load payment system. Please refresh the page.");
-      });
-  }, []);
+  const scheduleOrderStatus = (orderId: string) => {
+    const statusUpdates = [
+      { delay: 5000, status: "Picked" },
+      { delay: 10000, status: "Shipped" },
+    ];
+
+    statusUpdates.forEach(({ delay, status }) => {
+      window.setTimeout(() => {
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.id === orderId ? { ...order, status } : order,
+          ),
+        );
+      }, delay);
+    });
+  };
 
   const handlePlaceOrder = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!currentUser || cart.length === 0) return;
+    if (!currentUser || cart.length === 0 || !isCheckoutFormComplete) return;
+
+    const orderId = `ORD-${Date.now()}`;
+    const reference = `PAY-${Date.now()}`;
+    const orderItems = cart.map((item) => ({ ...item }));
+    const transactionCustomer = { ...checkoutState };
+    let paymentCompleted = false;
 
     const publicKey = getPaystackPublicKey();
     if (!publicKey) {
       setPaymentError("Missing Paystack public key. Set VITE_PAYSTACK_PUBLIC_KEY in your environment.");
-      return;
-    }
-
-    if (!isPaystackReady) {
-      setPaymentError("Payment system is still loading. Please wait a moment and try again.");
+      addTransaction({
+        id: reference,
+        orderId,
+        userId: currentUser.id,
+        createdAt: new Date().toISOString(),
+        total,
+        status: "Failed",
+        paymentReference: reference,
+        failureReason: "Missing Paystack public key.",
+        items: orderItems,
+        customer: transactionCustomer,
+      });
       return;
     }
 
@@ -64,12 +99,84 @@ export function Checkout() {
       const PaystackPop = await loadPaystackScript();
       if (!PaystackPop) {
         setPaymentError("Unable to start Paystack checkout.");
+        addTransaction({
+          id: reference,
+          orderId,
+          userId: currentUser.id,
+          createdAt: new Date().toISOString(),
+          total,
+          status: "Failed",
+          paymentReference: reference,
+          failureReason: "Unable to start Paystack checkout.",
+          items: orderItems,
+          customer: transactionCustomer,
+        });
         setIsPaying(false);
         return;
       }
 
-      const orderId = `ORD-${Date.now()}`;
-      const reference = `PAY-${Date.now()}`;
+      const finalizePayment = async (response: { reference: string }) => {
+        paymentCompleted = true;
+        const shippingAddress = [
+          checkoutState.address,
+          checkoutState.city,
+          checkoutState.country,
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        const callbackUrl = `${window.location.origin}/orders`;
+
+        try {
+          await apiCheckout(shippingAddress, callbackUrl);
+        } catch {
+          // Non-fatal: order may still be recorded server-side via Paystack webhook
+        }
+
+        const newOrder = {
+          id: orderId,
+          userId: currentUser.id,
+          createdAt: new Date().toISOString(),
+          total: total,
+          status: "Purchased",
+          paymentStatus: "Paid" as const,
+          paymentReference: response.reference,
+          items: orderItems,
+          customer: transactionCustomer,
+        };
+        setOrders((prev) => [newOrder, ...prev]);
+        addTransaction({
+          id: response.reference,
+          orderId,
+          userId: currentUser.id,
+          createdAt: newOrder.createdAt,
+          total,
+          status: "Successful",
+          paymentReference: response.reference,
+          items: orderItems,
+          customer: transactionCustomer,
+        });
+        scheduleOrderStatus(orderId);
+
+        addNotification({
+          userId: currentUser.id,
+          title: "Payment successful",
+          message: `Your payment for ${orderId} was received. Reference: ${response.reference}.`,
+          type: "payment",
+        });
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Kyklos payment successful", {
+            body: `Your order ${orderId} has been confirmed.`,
+          });
+        } else if ("Notification" in window && Notification.permission === "default") {
+          void Notification.requestPermission();
+        }
+
+        clearCart();
+        setIsPaying(false);
+        navigate("/orders");
+      };
 
       PaystackPop.setup({
         key: publicKey,
@@ -86,61 +193,41 @@ export function Checkout() {
             },
           ],
         },
-        callback: async (response) => {
-          const shippingAddress = [
-            checkoutState.address,
-            checkoutState.city,
-            checkoutState.country,
-          ]
-            .filter(Boolean)
-            .join(", ");
-
-          const callbackUrl = `${window.location.origin}/orders`;
-
-          try {
-            await apiCheckout(shippingAddress, callbackUrl);
-          } catch {
-            // Non-fatal: order may still be recorded server-side via Paystack webhook
-          }
-
-          const newOrder = {
-            id: orderId,
-            userId: currentUser.id,
-            createdAt: new Date().toISOString(),
-            total: total,
-            status: "Processing",
-            paymentStatus: "Paid" as const,
-            paymentReference: response.reference,
-            items: cart,
-            customer: checkoutState,
-          };
-          setOrders([newOrder, ...orders]);
-
-          addNotification({
-            userId: currentUser.id,
-            title: "Payment successful",
-            message: `Your payment for ${orderId} was received. Reference: ${response.reference}.`,
-            type: "payment",
-          });
-
-          if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("Kyklos payment successful", {
-              body: `Your order ${orderId} has been confirmed.`,
-            });
-          } else if ("Notification" in window && Notification.permission === "default") {
-            void Notification.requestPermission();
-          }
-
-          clearCart();
-          setIsPaying(false);
-          navigate("/orders");
+        callback(response) {
+          void finalizePayment(response);
         },
         onClose: () => {
+          if (!paymentCompleted) {
+            addTransaction({
+              id: reference,
+              orderId,
+              userId: currentUser.id,
+              createdAt: new Date().toISOString(),
+              total,
+              status: "Failed",
+              paymentReference: reference,
+              failureReason: "Payment window closed before confirmation.",
+              items: orderItems,
+              customer: transactionCustomer,
+            });
+          }
           setIsPaying(false);
         },
       }).openIframe();
     } catch (error) {
       setIsPaying(false);
+      addTransaction({
+        id: reference,
+        orderId,
+        userId: currentUser.id,
+        createdAt: new Date().toISOString(),
+        total,
+        status: "Failed",
+        paymentReference: reference,
+        failureReason: error instanceof Error ? error.message : "Unable to initialize payment.",
+        items: orderItems,
+        customer: transactionCustomer,
+      });
       setPaymentError(
         error instanceof Error ? error.message : "Unable to initialize payment.",
       );
@@ -156,6 +243,11 @@ export function Checkout() {
           </button>
           <div className="checkout-header-content">
             <h1 className="checkout-title">Complete Your Order</h1>
+            {repeatTransaction && (
+              <div className="checkout-repeat-banner">
+                Repeating transaction {repeatTransaction.orderId}. Review the details and pay again to complete it.
+              </div>
+            )}
           </div>
         </div>
 
@@ -262,14 +354,9 @@ export function Checkout() {
               <button 
                 className="checkout-submit-btn" 
                 type="submit" 
-                disabled={isPaying || cart.length === 0 || !isPaystackReady}
+                disabled={isPaying || cart.length === 0 || !isCheckoutFormComplete}
               >
-                {!isPaystackReady ? (
-                  <>
-                    <span className="checkout-spinner"></span>
-                    Loading payment system...
-                  </>
-                ) : isPaying ? (
+                {isPaying ? (
                   <>
                     <span className="checkout-spinner"></span>
                     Processing...

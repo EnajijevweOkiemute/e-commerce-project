@@ -73,20 +73,19 @@
   color: #111;
   border: none;
   border-radius: 999px;
+  text-align: center;
   cursor: pointer;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
 }
-
 .hero__cta:hover {
   background: #f5f5f5;
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   COLLECTIONS SECTION
-   ═══════════════════════════════════════════════════════════ */
 
 .collections-section {
   padding: 5rem 0;

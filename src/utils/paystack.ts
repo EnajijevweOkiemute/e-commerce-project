@@ -30,6 +30,7 @@ declare global {
 }
 
 const PAYSTACK_SCRIPT_ID = "paystack-inline-script";
+let paystackLoadPromise: Promise<PaystackGlobal | undefined> | null = null;
 
 export function getPaystackPublicKey() {
   return config.paystackPublicKey;
@@ -40,13 +41,26 @@ export async function loadPaystackScript() {
     return window.PaystackPop;
   }
 
+  if (!paystackLoadPromise) {
+    paystackLoadPromise = loadPaystackScriptOnce().catch((error) => {
+      paystackLoadPromise = null;
+      removePaystackScript();
+      throw error;
+    });
+  }
+
+  return paystackLoadPromise;
+}
+
+function loadPaystackScriptOnce() {
   const existingScript = document.getElementById(
     PAYSTACK_SCRIPT_ID,
   ) as HTMLScriptElement | null;
+
   if (existingScript) {
-    await waitForPaystack();
-    return window.PaystackPop;
+    removePaystackScript();
   }
+
   return new Promise<PaystackGlobal | undefined>((resolve, reject) => {
     const script = document.createElement("script");
     script.id = PAYSTACK_SCRIPT_ID;
@@ -69,6 +83,10 @@ export async function loadPaystackScript() {
 
     document.body.appendChild(script);
   });
+}
+
+function removePaystackScript() {
+  document.getElementById(PAYSTACK_SCRIPT_ID)?.remove();
 }
 
 function waitForPaystack() {

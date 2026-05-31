@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { ProductCard } from "../../component/product/ProductCard";
 import "./shop.css";
-import { config } from "../../config/env";
+import { apiFetchProducts, fetchCategories } from "../../utils/productApi";
 import { Product } from "../../types";
 
 interface ApiProduct {
@@ -48,48 +48,25 @@ export function Shop() {
 
   useEffect(() => {
     const fetchData = async () => {
-     
-
       try {
-        const categoriesRes = await fetch(`${config?.apiBaseUrl}/Category`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-           
-          },
-        });
+        const categoriesData = await fetchCategories();
+        setCategories(["All", ...categoriesData.map((cat) => cat.name)]);
 
-        console.log("Categories response:", categoriesRes);
-        if (categoriesRes?.ok) {
-          const categoriesData: ApiCategory[] = await categoriesRes.json();
-          const categoryNames = categoriesData.map((cat) => cat.name);
-          setCategories(["All", ...categoryNames]);
-        }
-        const productsRes = await fetch(`${config.apiBaseUrl}/Product`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const productsData = await apiFetchProducts();
+        const productList: Product[] = productsData.items.map((apiProduct: ApiProduct) => ({
+          id: apiProduct.id,
+          name: apiProduct.name,
+          description: apiProduct.description,
+          category: apiProduct.categoryName,
+          price: apiProduct.price,
+          image: apiProduct.imageUrl,
+          stock: apiProduct.stockQuantity,
+          rating: 0,
+          reviews: [],
+        }));
 
-        if (productsRes.ok) {
-          const productsData: { items: ApiProduct[] } = await productsRes.json();
-          
-          const productList: Product[] = productsData.items.map((apiProduct) => ({
-            id: apiProduct.id,
-            name: apiProduct.name,
-            description: apiProduct.description,
-            category: apiProduct.categoryName,
-            price: apiProduct.price,
-            image: apiProduct.imageUrl,
-            stock: apiProduct.stockQuantity,
-            rating: 0,
-            reviews: [],
-          }));
-
-          setLocalProducts(productList);
-          setProducts(productList);
-        }
+        setLocalProducts(productList);
+        setProducts(productList);
       } catch (err) {
         console.error("Error fetching data:", err);
         setFetchError(true);

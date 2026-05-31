@@ -162,12 +162,19 @@
   color: #084298;
 }
 
-.orders-status-badge.status-shipped {
-  background: #d1e7dd;
-  color: #0f5132;
+.orders-status-badge.status-picked {
+  background: #cfe2ff;
+  color: #084298;
 }
 
 .orders-status-badge.status-delivered {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.orders-status-badge.status-shipped,
+.orders-status-badge.status-out-for-delivery,
+.orders-status-badge.status-outfordelivery {
   background: #d1e7dd;
   color: #0f5132;
 }
@@ -220,6 +227,103 @@
   font-weight: 600;
   color: #212529;
   white-space: nowrap;
+}
+
+.delivery-tracker {
+  margin: 0 0 1.5rem;
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at 15% 35%, rgba(13, 110, 253, 0.08) 0 2px, transparent 3px),
+    radial-gradient(circle at 64% 58%, rgba(25, 135, 84, 0.1) 0 2px, transparent 3px),
+    linear-gradient(135deg, #f8fafc 0%, #eef3f8 100%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+}
+
+.delivery-map {
+  position: relative;
+  height: 62px;
+  margin: 0.25rem 1.25rem 1rem;
+}
+
+.delivery-map::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 29px;
+  height: 4px;
+  background: #d7dee7;
+  border-radius: 999px;
+}
+
+.delivery-map-progress {
+  position: absolute;
+  left: 0;
+  top: 29px;
+  height: 4px;
+  background: linear-gradient(90deg, #0d6efd, #198754);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.delivery-map-stop {
+  position: absolute;
+  top: 14px;
+  transform: translateX(-50%);
+}
+
+.delivery-map-pin {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #adb5bd;
+  border: 3px solid #d7dee7;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.delivery-map-stop--active .delivery-map-pin {
+  color: #fff;
+  border-color: #198754;
+  background: #198754;
+}
+
+.delivery-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.delivery-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  color: #6c757d;
+  text-align: center;
+}
+
+.delivery-step strong {
+  font-size: 0.92rem;
+  color: #495057;
+}
+
+.delivery-step span {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.delivery-step--active strong {
+  color: #0f5132;
+}
+
+.delivery-step--active span {
+  color: #495057;
 }
 
 .orders-card-footer {
@@ -390,6 +494,10 @@
   .orders-item-image {
     width: 56px;
     height: 56px;
+  }
+
+  .delivery-steps {
+    grid-template-columns: 1fr;
   }
 }
 

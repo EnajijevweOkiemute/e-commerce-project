@@ -27,10 +27,11 @@ function AdminDashBoard() {
     currentUser,
     products,
     orders,
+    transactions,
     createProduct,
     updateProduct,
     deleteProduct,
-    markOrderShipped,
+    markOrderDelivered,
   } = useAppContext();
 
   const [productForm, setProductForm] = useState(EMPTY_FORM);
@@ -54,6 +55,7 @@ function AdminDashBoard() {
     () => orders.reduce((sum, order) => sum + order.total, 0),
     [orders]
   );
+  const failedTransactions = transactions.filter((transaction) => transaction.status === "Failed").length;
 
   useEffect(() => {
     fetchCategories()
@@ -234,6 +236,43 @@ function AdminDashBoard() {
               <span className="admin-metric-label">Total Revenue</span>
               <strong className="admin-metric-value">${totalRevenue.toFixed(0)}</strong>
             </div>
+          </div>
+
+          <Link className="admin-metric-card admin-metric-card--link" to="/transactions">
+            <div className="admin-metric-icon admin-metric-icon--transactions">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+                <path d="M7 15h.01"></path>
+                <path d="M11 15h4"></path>
+              </svg>
+            </div>
+            <div className="admin-metric-content">
+              <span className="admin-metric-label">Transactions</span>
+              <strong className="admin-metric-value">{transactions.length}</strong>
+            </div>
+          </Link>
+        </div>
+
+        <div className="admin-card admin-card--transaction-link">
+          <div className="admin-card-header">
+            <div>
+              <span className="admin-card-eyebrow">Payments</span>
+              <h3 className="admin-card-title">Transaction History</h3>
+            </div>
+            {failedTransactions > 0 && (
+              <span className="admin-status-badge admin-status-badge--failed">
+                {failedTransactions} failed
+              </span>
+            )}
+          </div>
+          <div className="admin-card-body admin-transaction-link-body">
+            <p>
+              Review successful and failed payment attempts across customers and download transaction receipts.
+            </p>
+            <Link className="admin-order-btn admin-transaction-link-btn" to="/transactions">
+              View transactions
+            </Link>
           </div>
         </div>
 
@@ -582,12 +621,12 @@ function AdminDashBoard() {
                       <div className="admin-order-footer">
                         <strong className="admin-order-total">${order.total.toFixed(0)}</strong>
                         <button
-                          className={`admin-order-btn ${order.status === "Shipped" ? "admin-order-btn--disabled" : ""}`}
+                          className={`admin-order-btn ${order.status === "Delivered" ? "admin-order-btn--disabled" : ""}`}
                           type="button"
-                          onClick={() => markOrderShipped(order.id)}
-                          disabled={order.status === "Shipped"}
+                          onClick={() => markOrderDelivered(order.id)}
+                          disabled={order.status === "Delivered"}
                         >
-                          {order.status === "Shipped" ? "Shipped" : "Mark as Shipped"}
+                          {order.status === "Delivered" ? "Delivered" : "Mark as Delivered"}
                         </button>
                       </div>
                     </div>

@@ -13,8 +13,24 @@ export interface Category {
 }
 
 export async function fetchCategories(): Promise<Category[]> {
-  const res = await fetch(`${config.apiBaseUrl}/Category`);
-  if (!res.ok) throw new Error("Failed to fetch categories");
+  const res = await fetch(`${config.apiBaseUrl}/Category`, {
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Failed to fetch categories (${res.status})`);
+  }
+  return res.json();
+}
+
+export async function apiFetchProducts(): Promise<{ items: unknown[] }> {
+  const res = await fetch(BASE, {
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Failed to fetch products (${res.status})`);
+  }
   return res.json();
 }
 
