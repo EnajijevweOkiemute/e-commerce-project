@@ -15,6 +15,7 @@ export interface Category {
 export async function fetchCategories(): Promise<Category[]> {
   const res = await fetch(`${config.apiBaseUrl}/Category`, {
     headers: { "Content-Type": "application/json", ...authHeaders() },
+    cache: "no-store",
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -26,6 +27,7 @@ export async function fetchCategories(): Promise<Category[]> {
 export async function apiFetchProducts(): Promise<{ items: unknown[] }> {
   const res = await fetch(BASE, {
     headers: { "Content-Type": "application/json", ...authHeaders() },
+    cache: "no-store",
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -34,7 +36,11 @@ export async function apiFetchProducts(): Promise<{ items: unknown[] }> {
   return res.json();
 }
 
-export async function apiUpdateCategory(id: string, name: string, description: string): Promise<void> {
+export async function apiUpdateCategory(
+  id: string,
+  name: string,
+  description: string,
+): Promise<void> {
   const res = await fetch(`${config.apiBaseUrl}/Category/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -57,7 +63,10 @@ export async function apiDeleteCategory(id: string): Promise<void> {
   }
 }
 
-export async function apiCreateCategory(name: string, description: string): Promise<Category> {
+export async function apiCreateCategory(
+  name: string,
+  description: string,
+): Promise<Category> {
   const res = await fetch(`${config.apiBaseUrl}/Category`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -108,7 +117,7 @@ export async function apiUpdateProduct(
     stockQuantity: number;
     categoryId: string;
     image?: File | null;
-  }
+  },
 ) {
   const form = new FormData();
   form.append("Name", data.name);
