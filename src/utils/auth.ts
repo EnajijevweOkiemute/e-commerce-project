@@ -4,6 +4,57 @@ import { passwordRules } from "../component/auth/passwordRules";
 const USERS_KEY = "users";
 const TOKENS_KEY = "passwordResetTokens";
 const EMAILS_KEY = "passwordResetEmails";
+const AUTH_TOKEN_KEY = "authToken";
+
+function normalizeAuthToken(token: unknown): string {
+  if (typeof token !== "string") return "";
+  return token.trim().replace(/^Bearer\s+/i, "");
+}
+
+export function extractAuthToken(payload: unknown): string {
+  if (!payload || typeof payload !== "object") return "";
+
+  const data = payload as Record<string, unknown>;
+  return normalizeAuthToken(
+    data.token ??
+      data.accessToken ??
+      data.access_token ??
+      (data.data as Record<string, unknown> | undefined)?.token ??
+      (data.data as Record<string, unknown> | undefined)?.accessToken,
+  );
+}
+
+export function saveAuthToken(token: unknown): string {
+  const normalizedToken = normalizeAuthToken(token);
+  if (!normalizedToken) {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    throw new Error("The server did not return a valid authentication token.");
+  }
+
+  localStorage.setItem(AUTH_TOKEN_KEY, normalizedToken);
+  return normalizedToken;
+}
+
+export function getAuthToken(): string {
+  const token = normalizeAuthToken(localStorage.getItem(AUTH_TOKEN_KEY));
+  if (!token || token === "undefined" || token === "null") return "";
+  return token;
+}
+
+export function getAuthHeaders(includeContentType = false): Record<string, string> {
+  const token = getAuthToken();
+  return {
+    ...(includeContentType ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+export function requireAuthHeaders(includeContentType = false): Record<string, string> {
+  if (!getAuthToken()) {
+    throw new Error("Your session has expired. Please log in again.");
+  }
+  return getAuthHeaders(includeContentType);
+}
 
 export function getStoredUsers(): StoredUser[] {
   return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");

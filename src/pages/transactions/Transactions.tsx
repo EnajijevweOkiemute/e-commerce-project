@@ -37,45 +37,262 @@ function apiOrderToTransaction(order: ApiOrder, userId: string): Transaction {
   };
 }
 
-function receiptText(transaction: Transaction) {
-  const itemLines = transaction.items
+function generateReceiptHTML(transaction: Transaction) {
+  const itemsHtml = transaction.items
     .map(
-      (item) =>
-        `${item.name} x ${item.quantity} - ${currency.format(item.price * item.quantity)}`,
+      (item) => `
+    <tr>
+      <td style="padding: 12px; border-bottom: 1px solid #eee;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          ${
+            item.image
+              ? `<img src="${item.image}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" />`
+              : ""
+          }
+          <span style="font-weight: 500; color: #333;">${item.name}</span>
+        </div>
+      </td>
+      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; color: #555;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; color: #555;">${currency.format(
+        item.price,
+      )}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 600; color: #333;">${currency.format(
+        item.price * item.quantity,
+      )}</td>
+    </tr>
+  `,
     )
-    .join("\n");
+    .join("");
 
-  return [
-    "KYKLOS TRANSACTION RECEIPT",
-    `Transaction: ${transaction.id}`,
-    `Order: ${transaction.orderId}`,
-    `Status: ${transaction.status}`,
-    `Reference: ${transaction.paymentReference}`,
-    `Date: ${new Date(transaction.createdAt).toLocaleString()}`,
-    `Customer: ${transaction.customer.name || "Not provided"}`,
-    `Email: ${transaction.customer.email || "Not provided"}`,
-    `Address: ${[transaction.customer.address, transaction.customer.city, transaction.customer.country].filter(Boolean).join(", ") || "Not provided"}`,
-    "",
-    "Items",
-    itemLines || "No items recorded",
-    "",
-    `Total: ${currency.format(transaction.total)}`,
-    transaction.failureReason ? `Failure reason: ${transaction.failureReason}` : "",
-  ]
-    .filter((line) => line !== "")
-    .join("\n");
+  const date = new Date(transaction.createdAt).toLocaleString();
+  const address =
+    [transaction.customer.address, transaction.customer.city, transaction.customer.country]
+      .filter(Boolean)
+      .join(", ") || "Not provided";
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Receipt - ${transaction.id}</title>
+      <style>
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          margin: 0;
+          padding: 40px 20px;
+          background-color: #f9fafb;
+          color: #111827;
+        }
+        .receipt-container {
+          max-width: 600px;
+          margin: 0 auto;
+          background: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          overflow: hidden;
+        }
+        .receipt-header {
+          background-color: #111827;
+          color: #ffffff;
+          padding: 30px;
+          text-align: center;
+        }
+        .receipt-header h1 {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: 1px;
+        }
+        .receipt-header p {
+          margin: 8px 0 0;
+          color: #9ca3af;
+          font-size: 14px;
+        }
+        .receipt-body {
+          padding: 30px;
+        }
+        .info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+        .info-block h3 {
+          margin: 0 0 8px;
+          font-size: 12px;
+          text-transform: uppercase;
+          color: #6b7280;
+          letter-spacing: 0.5px;
+        }
+        .info-block p {
+          margin: 0;
+          font-size: 14px;
+          color: #374151;
+          line-height: 1.5;
+        }
+        .status-badge {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          font-size: 12px;
+          font-weight: 600;
+          margin-top: 8px;
+        }
+        .status-successful { background-color: #d1fae5; color: #065f46; }
+        .status-failed { background-color: #fee2e2; color: #991b1b; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+        th {
+          text-align: left;
+          padding: 12px;
+          font-size: 12px;
+          text-transform: uppercase;
+          color: #6b7280;
+          border-bottom: 2px solid #e5e7eb;
+        }
+        th.center { text-align: center; }
+        th.right { text-align: right; }
+        
+        .totals {
+          margin-top: 30px;
+          border-top: 2px solid #e5e7eb;
+          padding-top: 20px;
+          display: flex;
+          justify-content: flex-end;
+        }
+        .totals-table {
+          width: 250px;
+        }
+        .totals-table td {
+          padding: 8px 0;
+          color: #4b5563;
+        }
+        .totals-table tr.grand-total td {
+          color: #111827;
+          font-weight: 700;
+          font-size: 18px;
+          border-top: 1px solid #e5e7eb;
+          padding-top: 12px;
+        }
+        .totals-table td:last-child {
+          text-align: right;
+        }
+        .footer {
+          background-color: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          font-size: 13px;
+          color: #6b7280;
+          border-top: 1px solid #e5e7eb;
+        }
+        .print-btn {
+          display: block;
+          margin: 20px auto 0;
+          padding: 10px 20px;
+          background-color: #111827;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        .print-btn:hover { background-color: #374151; }
+        @media print {
+          body { background-color: white; padding: 0; }
+          .receipt-container { box-shadow: none; max-width: 100%; border-radius: 0; }
+          .print-btn { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="receipt-container">
+        <div class="receipt-header">
+          <h1>KYKLOS</h1>
+          <p>Transaction Receipt</p>
+        </div>
+        
+        <div class="receipt-body">
+          <div class="info-grid">
+            <div class="info-block">
+              <h3>Transaction Details</h3>
+              <p><strong>ID:</strong> ${transaction.id}</p>
+              <p><strong>Order:</strong> ${transaction.orderId}</p>
+              <p><strong>Date:</strong> ${date}</p>
+              <p><strong>Reference:</strong> ${transaction.paymentReference}</p>
+              <span class="status-badge status-${transaction.status.toLowerCase()}">${transaction.status}</span>
+              ${
+                transaction.failureReason
+                  ? `<p style="color: #ef4444; margin-top: 8px; font-size: 13px;">Reason: ${transaction.failureReason}</p>`
+                  : ""
+              }
+            </div>
+            
+            <div class="info-block">
+              <h3>Billed To</h3>
+              <p><strong>${transaction.customer.name || "Customer"}</strong></p>
+              <p>${transaction.customer.email || "No email"}</p>
+              <p style="margin-top: 8px; color: #6b7280;">${address}</p>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th class="center">Qty</th>
+                <th class="right">Price</th>
+                <th class="right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                itemsHtml ||
+                '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #9ca3af;">No items recorded</td></tr>'
+              }
+            </tbody>
+          </table>
+          
+          <div class="totals">
+            <table class="totals-table">
+              <tr>
+                <td>Subtotal</td>
+                <td>${currency.format(transaction.total)}</td>
+              </tr>
+              <tr class="grand-total">
+                <td>Total</td>
+                <td>${currency.format(transaction.total)}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p>If you have any questions concerning this receipt, contact our customer support.</p>
+          <p>Thank you for your business!</p>
+        </div>
+      </div>
+      
+      <button class="print-btn" onclick="window.print()">Print Receipt</button>
+    </body>
+    </html>
+  `;
 }
 
 function downloadReceipt(transaction: Transaction) {
-  const blob = new Blob([receiptText(transaction)], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `kyklos-${transaction.id}-receipt.txt`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  const newWindow = window.open("", "_blank");
+  if (newWindow) {
+    newWindow.document.write(generateReceiptHTML(transaction));
+    newWindow.document.close();
+  }
 }
 
 function transactionItemCount(items: CartItem[]) {

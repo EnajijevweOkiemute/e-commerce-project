@@ -1,11 +1,8 @@
 import { config } from "../config/env";
+import { getAuthHeaders } from "./auth";
 
 function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem("authToken");
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+  return getAuthHeaders(true);
 }
 
 export interface ApiOrder {

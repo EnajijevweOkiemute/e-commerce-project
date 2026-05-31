@@ -31,7 +31,7 @@ export function ProductCard({ product, onOpen, onAdd }: ProductCardProps) {
     <article className="product-card">
       <button className="product-card__image-wrap" onClick={() => onOpen(product.id)}>
         <img className="product-card__image" src={product?.image} alt={product.name} />
-        {product.stock < 10 ? <span className="pill pill--alert">Low Stock</span> : null}
+        {product?.stock < 10 ? <span className="pill pill--alert">Low Stock</span> : null}
       </button>
       <div className="product-card__body">
         <p className="product-card__rating">

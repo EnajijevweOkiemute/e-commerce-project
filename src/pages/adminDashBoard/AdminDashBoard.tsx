@@ -10,6 +10,8 @@ import {
   apiCreateCategory,
   apiUpdateCategory,
   apiDeleteCategory,
+  apiFetchAllProducts,
+  apiProductToProduct,
   Category,
 } from "../../utils/productApi";
 import "./adminDashBoard.css";
@@ -22,10 +24,13 @@ const EMPTY_FORM = {
   description: "",
 };
 
+const ADMIN_PRODUCTS_PER_PAGE = 5;
+
 function AdminDashBoard() {
   const {
     currentUser,
     products,
+    setProducts,
     orders,
     transactions,
     createProduct,
@@ -48,6 +53,7 @@ function AdminDashBoard() {
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<{ id: string; name: string; description: string } | null>(null);
   const [categoryBusyIds, setCategoryBusyIds] = useState<Set<string>>(new Set());
+  const [productPage, setProductPage] = useState(1);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,12 +62,39 @@ function AdminDashBoard() {
     [orders]
   );
   const failedTransactions = transactions.filter((transaction) => transaction.status === "Failed").length;
+  const totalProductPages = Math.max(1, Math.ceil(products.length / ADMIN_PRODUCTS_PER_PAGE));
+  const activeProductPage = Math.min(productPage, totalProductPages);
+  const paginatedProducts = products.slice(
+    (activeProductPage - 1) * ADMIN_PRODUCTS_PER_PAGE,
+    activeProductPage * ADMIN_PRODUCTS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (productPage > totalProductPages) {
+      setProductPage(totalProductPages);
+    }
+  }, [productPage, totalProductPages]);
 
   useEffect(() => {
     fetchCategories()
       .then(setCategories)
       .catch(() => setToast({ message: "Could not load categories.", type: "error" }));
   }, []);
+
+  useEffect(() => {
+    apiFetchAllProducts()
+      .then((apiProducts) =>
+        setProducts((previousProducts) => {
+          const existingProducts = new Map(
+            previousProducts.map((product) => [product.id, product]),
+          );
+          return apiProducts.map((apiProduct) =>
+            apiProductToProduct(apiProduct, existingProducts.get(apiProduct.id)),
+          );
+        }),
+      )
+      .catch(() => setToast({ message: "Could not load products.", type: "error" }));
+  }, [setProducts]);
 
   if (!currentUser) return <Navigate to="/login" replace />;
   if (currentUser.role !== "admin") return <Navigate to="/dashboard" replace />;
@@ -656,7 +689,7 @@ function AdminDashBoard() {
           </div>
           <div className="admin-card-body">
             <div className="admin-inventory-grid">
-              {products.map((product) => {
+              {paginatedProducts.map((product) => {
                 const isBusy = savingIds.has(product.id);
                 const edits = pendingEdits[product.id] ?? {};
                 const hasEdits = Object.keys(edits).length > 0 || !!editImageFiles[product.id];
@@ -789,6 +822,39 @@ function AdminDashBoard() {
                 );
               })}
             </div>
+            {products.length > ADMIN_PRODUCTS_PER_PAGE && (
+              <nav className="admin-pagination" aria-label="Admin product pages">
+                <button
+                  className="admin-pagination-button"
+                  type="button"
+                  onClick={() => setProductPage((page) => Math.max(1, page - 1))}
+                  disabled={activeProductPage === 1}
+                >
+                  Previous
+                </button>
+                <div className="admin-pagination-numbers">
+                  {Array.from({ length: totalProductPages }, (_, index) => index + 1).map((page) => (
+                    <button
+                      className={`admin-pagination-number ${page === activeProductPage ? "admin-pagination-number--active" : ""}`}
+                      type="button"
+                      key={page}
+                      aria-current={page === activeProductPage ? "page" : undefined}
+                      onClick={() => setProductPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="admin-pagination-button"
+                  type="button"
+                  onClick={() => setProductPage((page) => Math.min(totalProductPages, page + 1))}
+                  disabled={activeProductPage === totalProductPages}
+                >
+                  Next
+                </button>
+              </nav>
+            )}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { Toast } from "../../component/ui/Toast";
 import { config } from "../../config/env";
+import { extractAuthToken, saveAuthToken } from "../../utils/auth";
 import "./login.css";
 
 const WATCH_IMAGE =
@@ -37,7 +38,7 @@ export function Login() {
         return;
       }
 
-      localStorage.setItem("authToken", data.token);
+      saveAuthToken(extractAuthToken(data));
       setCurrentUser({
         id: data.user.id,
         name: `${data.user.firstName} ${data.user.lastName}`,
@@ -49,8 +50,11 @@ export function Login() {
       const destination =
         data.user.userType?.toLowerCase() === "admin" ? "/admin-dashboard" : "/dashboard";
       setTimeout(() => navigate(destination), 1000);
-    } catch {
-      setToast({ message: "Network error. Please check your connection.", type: "error" });
+    } catch (error) {
+      setToast({
+        message: error instanceof Error ? error.message : "Network error. Please check your connection.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }

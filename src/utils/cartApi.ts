@@ -1,13 +1,13 @@
 import { config } from "../config/env";
 import { CartItem } from "../types";
+import { getAuthHeaders, getAuthToken } from "./auth";
 
 const BASE = `${config.apiBaseUrl}/Cart`;
 
 function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem("authToken");
-  console.log("[Cart] authToken:", token);
+  const token = getAuthToken();
   if (!token) throw new Error("Not authenticated");
-  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  return getAuthHeaders(true);
 }
 
 export async function apiGetCart(): Promise<CartItem[]> {

@@ -4,6 +4,7 @@ import { useAppContext } from "../../context/AppContext";
 import { PasswordRulesBox } from "../../component/auth/PasswordRulesBox";
 import { Toast } from "../../component/ui/Toast";
 import { config } from "../../config/env";
+import { extractAuthToken, saveAuthToken } from "../../utils/auth";
 import "./signup.css";
 
 const WATCH_IMAGE =
@@ -71,7 +72,7 @@ export function SignUp() {
         return;
       }
 
-      localStorage.setItem("authToken", data.token);
+      saveAuthToken(extractAuthToken(data));
       setCurrentUser({
         id: data.user.id,
         name: `${data.user.firstName} ${data.user.lastName}`,
@@ -81,8 +82,11 @@ export function SignUp() {
 
       setToast({ message: "Account created successfully!", type: "success" });
       setTimeout(() => navigate("/dashboard"), 1200);
-    } catch {
-      setToast({ message: "Network error. Please check your connection.", type: "error" });
+    } catch (error) {
+      setToast({
+        message: error instanceof Error ? error.message : "Network error. Please check your connection.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }

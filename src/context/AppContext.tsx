@@ -37,6 +37,14 @@ function loadOrders(): Order[] {
   return JSON.parse(localStorage.getItem("orders") || "[]");
 }
 
+function loadProducts(): Product[] {
+  try {
+    return JSON.parse(localStorage.getItem("products") || "[]");
+  } catch {
+    return [];
+  }
+}
+
 function loadTransactions(): Transaction[] {
   return JSON.parse(localStorage.getItem("transactions") || "[]");
 }
@@ -119,8 +127,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadedUser = loadUser();
   const [products, setProducts] = useState<Product[]>(() => {
     seedStorage();
-    localStorage.removeItem("products");
-    return [];
+    return loadProducts();
   });
   const [cart, setCart] = useState<CartItem[]>(() => loadCart(loadedUser?.id));
   const [activeCartKey, setActiveCartKey] = useState(() => cartStorageKey(loadedUser?.id));

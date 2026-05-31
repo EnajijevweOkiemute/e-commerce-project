@@ -3,33 +3,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { ProductCard } from "../../component/product/ProductCard";
 import "./shop.css";
-import { apiFetchProducts, fetchCategories } from "../../utils/productApi";
-import { Product } from "../../types";
+import { apiFetchAllProducts, apiProductToProduct, fetchCategories } from "../../utils/productApi";
 
-interface ApiProduct {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stockQuantity: number;
-  isAvailable: boolean;
-  imageUrl: string;
-  categoryId: string;
-  categoryName: string;
-  createdDate: string;
-  updatedDate: string | null;
-}
-
-interface ApiCategory {
-  id: string;
-  name: string;
-  description: string;
-  createdDate: string;
-  updatedDate: string | null;
-}
+const PRODUCTS_PER_PAGE = 9;
 
 export function Shop() {
-  const { addToCart, setProducts } = useAppContext();
+  const { addToCart, products, setProducts } = useAppContext();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -37,10 +16,10 @@ export function Shop() {
   const [searchTerm, setSearchTerm] = useState(searchQuery);
   const [category, setCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
-  const [products, setLocalProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [loading, setLoading] = useState(true);
   const [, setFetchError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setSearchTerm(searchQuery);
@@ -49,24 +28,25 @@ export function Shop() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const categoriesData = await fetchCategories();
-        setCategories(["All", ...categoriesData.map((cat) => cat.name)]);
+        const [categoriesResult, apiProducts] = await Promise.all([
+          fetchCategories().catch(() => []),
+          apiFetchAllProducts(),
+        ]);
+        const productList = apiProducts.map((apiProduct) => apiProductToProduct(apiProduct));
+        const categoryNames = new Set([
+          ...categoriesResult.map((cat) => cat.name),
+          ...productList.map((product) => product.category),
+        ]);
 
-        const productsData = await apiFetchProducts();
-        const productList: Product[] = productsData.items.map((apiProduct: ApiProduct) => ({
-          id: apiProduct.id,
-          name: apiProduct.name,
-          description: apiProduct.description,
-          category: apiProduct.categoryName,
-          price: apiProduct.price,
-          image: apiProduct.imageUrl,
-          stock: apiProduct.stockQuantity,
-          rating: 0,
-          reviews: [],
-        }));
-
-        setLocalProducts(productList);
-        setProducts(productList);
+        setCategories(["All", ...categoryNames]);
+        setProducts((previousProducts) => {
+          const existingProducts = new Map(
+            previousProducts.map((product) => [product.id, product]),
+          );
+          return apiProducts.map((apiProduct) =>
+            apiProductToProduct(apiProduct, existingProducts.get(apiProduct.id)),
+          );
+        });
       } catch (err) {
         console.error("Error fetching data:", err);
         setFetchError(true);
@@ -132,6 +112,23 @@ export function Shop() {
 
     return next;
   }, [activeSearchQuery, category, products, sortBy]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeSearchQuery, category, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const activePage = Math.min(currentPage, totalPages);
+  const paginatedProducts = filteredProducts.slice(
+    (activePage - 1) * PRODUCTS_PER_PAGE,
+    activePage * PRODUCTS_PER_PAGE,
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   if (loading) {
     return (
@@ -215,7 +212,7 @@ export function Shop() {
             {filteredProducts?.length === 0 ? (
               <p className="shop-empty">No products available.</p>
             ) : (
-              filteredProducts.map((product) => (
+              paginatedProducts.map((product) => (
                 <ProductCard
                   key={product?.id}
                   product={product}
@@ -225,6 +222,40 @@ export function Shop() {
               ))
             )}
           </div>
+
+          {filteredProducts.length > PRODUCTS_PER_PAGE && (
+            <nav className="shop-pagination" aria-label="Shop product pages">
+              <button
+                className="shop-pagination__button"
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={activePage === 1}
+              >
+                Previous
+              </button>
+              <div className="shop-pagination__numbers">
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                  <button
+                    className={`shop-pagination__number ${page === activePage ? "shop-pagination__number--active" : ""}`}
+                    type="button"
+                    key={page}
+                    aria-current={page === activePage ? "page" : undefined}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                className="shop-pagination__button"
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={activePage === totalPages}
+              >
+                Next
+              </button>
+            </nav>
+          )}
         </div>
       </div>
     </section>
