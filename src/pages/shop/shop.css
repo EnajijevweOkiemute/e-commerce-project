@@ -142,6 +142,48 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.shop-pagination,
+.shop-pagination__numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shop-pagination {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.shop-pagination__button,
+.shop-pagination__number {
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.shop-pagination__number {
+  padding: 0;
+}
+
+.shop-pagination__number--active {
+  border-color: var(--surface-dark);
+  background: var(--surface-dark);
+  color: #fff;
+}
+
+.shop-pagination__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 @media (max-width: 1100px) {
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

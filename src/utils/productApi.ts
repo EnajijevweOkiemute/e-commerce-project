@@ -1,4 +1,5 @@
 import { config } from "../config/env";
+import { Product } from "../types";
 
 const BASE = `${config.apiBaseUrl}/Product`;
 
@@ -10,6 +11,44 @@ function authHeaders(): Record<string, string> {
 export interface Category {
   id: string;
   name: string;
+}
+
+export interface ApiProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stockQuantity: number;
+  isAvailable: boolean;
+  imageUrl: string;
+  categoryId: string;
+  categoryName: string;
+  createdDate: string;
+  updatedDate: string | null;
+}
+
+export interface ProductPage {
+  items: ApiProduct[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export function apiProductToProduct(apiProduct: ApiProduct): Product {
+  return {
+    id: apiProduct.id,
+    name: apiProduct.name,
+    description: apiProduct.description,
+    category: apiProduct.categoryName,
+    price: apiProduct.price,
+    image: apiProduct.imageUrl,
+    stock: apiProduct.stockQuantity,
+    rating: 0,
+    reviews: [],
+  };
 }
 
 export async function fetchCategories(): Promise<Category[]> {
@@ -24,8 +63,12 @@ export async function fetchCategories(): Promise<Category[]> {
   return res.json();
 }
 
-export async function apiFetchProducts(): Promise<{ items: unknown[] }> {
-  const res = await fetch(BASE, {
+export async function apiFetchProducts(page = 1, pageSize = 100): Promise<ProductPage> {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  const res = await fetch(`${BASE}?${params.toString()}`, {
     headers: { "Content-Type": "application/json", ...authHeaders() },
     cache: "no-store",
   });
@@ -34,6 +77,22 @@ export async function apiFetchProducts(): Promise<{ items: unknown[] }> {
     throw new Error(text || `Failed to fetch products (${res.status})`);
   }
   return res.json();
+}
+
+export async function apiFetchAllProducts(pageSize = 100): Promise<ApiProduct[]> {
+  const firstPage = await apiFetchProducts(1, pageSize);
+  if (firstPage.totalPages <= 1) return firstPage.items;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+      apiFetchProducts(index + 2, pageSize),
+    ),
+  );
+
+  return [
+    ...firstPage.items,
+    ...remainingPages.flatMap((page) => page.items),
+  ];
 }
 
 export async function apiUpdateCategory(
