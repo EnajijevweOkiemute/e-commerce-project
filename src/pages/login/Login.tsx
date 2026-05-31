@@ -133,9 +133,9 @@ export function Login() {
                 </div>
               </div>
 
-              <div className="login-forgot">
+              {/* <div className="login-forgot">
                 <Link to="/forgot-password" className="text-button">Forgot password?</Link>
-              </div>
+              </div> */}
 
               <button className="login-submit-btn" type="submit" disabled={loading}>
                 {loading ? <span className="login-spinner" /> : "Login"}
